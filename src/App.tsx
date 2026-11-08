@@ -16,7 +16,8 @@ import {
   Check,
   SlidersHorizontal,
   Eye,
-  Filter
+  Filter,
+  Star
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
@@ -25,8 +26,58 @@ import ProductGrid from '@/components/ProductGrid';
 import ProductCard, { ProductType } from '@/components/ProductCard';
 import AdminProductForm from '@/components/AdminProductForm';
 
-// Initial 12 home decor items as specified
+// Initial curated home decor items including Home Décor category and atmosphere picks
 const INITIAL_PRODUCTS: ProductType[] = [
+  {
+    id: 'prod_hd_1',
+    name: 'Decorative Vases',
+    category: 'Home Décor',
+    description: 'Sculptural fluted ceramic vessel with a matte chalk finish, designed for displaying dry stems or making a quiet architectural statement on consoles.',
+    imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=decorative+vases+home+decor&tag=aestheticpiece-20',
+    price: 68.0,
+    featured: true,
+  },
+  {
+    id: 'prod_hd_2',
+    name: 'Tabletop Fountains',
+    category: 'Home Décor',
+    description: 'Handcrafted natural basalt stone indoor water fountain with gentle cascading stream, bringing calming acoustic ambiance to living sanctuaries.',
+    imageUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=tabletop+water+fountains+indoor&tag=aestheticpiece-20',
+    price: 145.0,
+    featured: true,
+  },
+  {
+    id: 'prod_hd_3',
+    name: 'Decorative Lamps',
+    category: 'Home Décor',
+    description: 'Mid-century modern dome table luminaire with warm ambient diffused LED illumination, featuring a weighted metal base and satin cashmere lacquer.',
+    imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=decorative+mushroom+table+lamps&tag=aestheticpiece-20',
+    price: 110.0,
+    featured: true,
+  },
+  {
+    id: 'prod_hd_4',
+    name: 'Wall Decorations',
+    category: 'Home Décor',
+    description: 'Hand-sculpted textured plaster relief canvas and slim arched brass mantle accent crafted for serene living spaces and entryways.',
+    imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=modern+aesthetic+wall+decorations&tag=aestheticpiece-20',
+    price: 185.0,
+    featured: true,
+  },
+  {
+    id: 'prod_hd_5',
+    name: 'Artificial Flowers',
+    category: 'Home Décor',
+    description: 'Naturally dried neutral pampas plumes and lifelike silk botanical stems adding soft movement, tactile richness, and organic texture to quiet corners.',
+    imageUrl: 'https://images.unsplash.com/photo-1508615039623-a25605d2b022?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=artificial+flowers+dried+botanicals&tag=aestheticpiece-20',
+    price: 38.0,
+    featured: false,
+  },
   {
     id: 'prod_1',
     name: 'Zen Basalt Stone Fountain',
@@ -347,23 +398,74 @@ export default function App() {
               }}
             />
 
-            {/* Category Grid Section */}
-            <CategoryGrid
-              onCategorySelect={(slug) => {
-                handleCategorySelect(slug);
-              }}
-            />
+            {/* Category Stacked Sections (Requirement 1) */}
+            <div id="products-section" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              {defaultCategories.map((category) => {
+                const catProducts = products.filter((p) => {
+                  const pCat = (p.category || '').toLowerCase().trim();
+                  const cName = category.name.toLowerCase().trim();
+                  return pCat === cName || pCat.includes(cName) || pCat.replace(/[^a-z0-9]+/g, '-') === category.slug;
+                });
 
-            {/* Product Grid Section */}
-            <ProductGrid
-              products={products}
-              activeCategory={activeCategoryFilter}
-              onCategoryFilterChange={setActiveCategoryFilter}
-              wishlistIds={wishlist}
-              onToggleWishlist={handleToggleWishlist}
-              onQuickView={(p) => setQuickViewProduct(p)}
-              onProductClick={handleProductSelect}
-            />
+                if (catProducts.length === 0) return null;
+
+                return (
+                  <section
+                    key={category.slug}
+                    className="pb-16 sm:pb-24 border-b border-[#e5e5e5] mb-16 sm:mb-24 last:border-b-0 last:pb-0 last:mb-0"
+                  >
+                    {/* Category Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold">
+                            Atmosphere Curation
+                          </span>
+                          <span className="text-[#a3a3a3]">&middot;</span>
+                          <span className="text-xs text-[#8c7b6c] font-medium">
+                            {catProducts.length} {catProducts.length === 1 ? 'Piece' : 'Pieces'}
+                          </span>
+                        </div>
+
+                        {/* Large Category Heading */}
+                        <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1a1a1a] font-normal tracking-tight">
+                          {category.name}
+                        </h2>
+
+                        {category.description && (
+                          <p className="mt-2 text-sm sm:text-base text-[#525252] font-light max-w-2xl leading-relaxed">
+                            {category.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCategorySelect(category.slug)}
+                        className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-medium text-[#1a1a1a] hover:underline self-start sm:self-end shrink-0 cursor-pointer"
+                      >
+                        <span>Explore {category.name}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Responsive Grid: grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {catProducts.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          isWishlisted={wishlist.includes(product.id)}
+                          onToggleWishlist={handleToggleWishlist}
+                          onQuickView={(p) => setQuickViewProduct(p)}
+                          onProductClick={handleProductSelect}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -455,73 +557,120 @@ export default function App() {
                 </div>
 
                 {/* Product Showcase */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 pb-20 border-b border-[#e5e5e5]">
-                  <div className="lg:col-span-7">
-                    <div className="relative aspect-[4/5] w-full bg-[#f4f2ee] border border-[#e5e5e5] overflow-hidden group">
-                      <img
-                        src={currentProduct.imageUrl}
-                        alt={currentProduct.name}
-                        className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-103"
-                      />
-                      {currentProduct.featured && (
-                        <div className="absolute top-4 left-4 bg-[#1a1a1a] text-white text-[10px] tracking-[0.2em] uppercase font-semibold px-3 py-1">
-                          Featured Curated Pick
-                        </div>
-                      )}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start pb-20 border-b border-[#e5e5e5]">
+                  {/* Left Column (Image): Properly sized, non-excessive container with clean frame */}
+                  <div className="lg:col-span-5 flex justify-center lg:justify-start">
+                    <div className="w-full max-w-[420px]">
+                      <div className="relative aspect-square sm:aspect-[4/5] w-full bg-white border border-[#e5e5e5] p-6 sm:p-8 flex items-center justify-center shadow-xs">
+                        <img
+                          src={currentProduct.imageUrl}
+                          alt={currentProduct.name}
+                          className="w-full h-full object-contain object-center transition-transform duration-500 ease-out hover:scale-103"
+                        />
+                        {currentProduct.featured && (
+                          <div className="absolute top-4 left-4 bg-[#1a1a1a] text-white text-[10px] tracking-[0.2em] uppercase font-semibold px-2.5 py-1 z-10 shadow-xs">
+                            Featured Pick
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-4 flex items-center justify-between text-[11px] text-[#737373] px-1 font-light">
+                        <span className="flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5 text-[#8c7b6c]" />
+                          <span>Verified Authenticity</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Sparkles className="w-3.5 h-3.5 text-[#8c7b6c]" />
+                          <span>Curator Inspected</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="lg:col-span-5 flex flex-col justify-between">
+                  {/* Right Column (Information): Clear, spacious, modern presentation */}
+                  <div className="lg:col-span-7 flex flex-col space-y-6 sm:space-y-7">
                     <div>
-                      <span className="inline-block text-[11px] uppercase tracking-[0.22em] text-[#737373] font-medium">
+                      {/* Clickable Product Category */}
+                      <button
+                        type="button"
+                        onClick={() => handleCategorySelect(categorySlug)}
+                        className="inline-block text-xs uppercase tracking-[0.22em] text-[#737373] hover:text-[#1a1a1a] font-medium transition-colors cursor-pointer text-left"
+                      >
                         {currentProduct.category}
-                      </span>
-                      <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#1a1a1a] mt-2 leading-[1.15]">
+                      </button>
+
+                      {/* Clear, Attractive Product Title */}
+                      <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#1a1a1a] mt-2 leading-[1.15] tracking-tight">
                         {currentProduct.name}
                       </h1>
-                      <div className="mt-4 pb-6 border-b border-[#e5e5e5] flex items-baseline gap-3">
-                        {currentProduct.price !== undefined && currentProduct.price !== null && currentProduct.price > 0 ? (
-                          <>
-                            <span className="font-serif text-2xl font-medium text-[#1a1a1a]">
-                              ${Number(currentProduct.price).toFixed(2)}
-                            </span>
-                            <span className="text-xs text-[#737373] uppercase tracking-wider font-light">
-                              Estimated Retail Guide Price
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-sm text-[#737373] italic">Curated Design Selection</span>
-                        )}
-                      </div>
+                    </div>
 
-                      <div className="mt-6 space-y-4">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#1a1a1a]">
-                          Curator&apos;s Notes &amp; Story
-                        </span>
-                        <p className="text-sm sm:text-base text-[#525252] leading-relaxed font-light">
-                          {currentProduct.description}
-                        </p>
+                    {/* Product Rating and Reviews */}
+                    <div className="flex items-center gap-3 text-xs">
+                      <div className="flex items-center text-[#1a1a1a]">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-[#1a1a1a] text-[#1a1a1a]" />
+                        ))}
+                      </div>
+                      <span className="font-medium text-[#1a1a1a]">4.9</span>
+                      <span className="text-[#a3a3a3]">&middot;</span>
+                      <span className="text-[#525252] font-light">48 Verified Curator Reviews</span>
+                      <span className="hidden sm:inline-block text-[#a3a3a3]">&middot;</span>
+                      <span className="hidden sm:inline-block text-[#245924] font-medium bg-[#f0f6f0] px-2 py-0.5 border border-[#d6ebd6]">
+                        In Stock at Retailer
+                      </span>
+                    </div>
+
+                    {/* Prominent Product Price */}
+                    <div className="pt-2 pb-5 border-y border-[#e5e5e5] flex flex-wrap items-baseline gap-3">
+                      <span className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#1a1a1a] tracking-tight">
+                        ${currentProduct.price !== undefined && currentProduct.price !== null && currentProduct.price > 0
+                          ? Number(currentProduct.price).toFixed(2)
+                          : '0.00'}
+                      </span>
+                      <span className="text-xs uppercase tracking-wider text-[#737373] font-light">
+                        Verified Retail Guide Price
+                      </span>
+                    </div>
+
+                    {/* Detailed Product Description with breathing room */}
+                    <div className="space-y-4">
+                      <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-[#1a1a1a] block">
+                        Curator&apos;s Design Story &amp; Details
+                      </span>
+                      <p className="text-base sm:text-lg text-[#525252] leading-relaxed font-light">
+                        {currentProduct.description}
+                      </p>
+                    </div>
+
+                    {/* Quality & Atmospheric Attributes */}
+                    <div className="space-y-2.5 py-4 border-t border-[#f0ede6] text-xs text-[#525252]">
+                      <div className="flex items-center gap-2.5">
+                        <Check className="w-4 h-4 text-[#8c7b6c] shrink-0" />
+                        <span>Selected for organic warmth, textural balance, and minimalist sanctuaries</span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        <Check className="w-4 h-4 text-[#8c7b6c] shrink-0" />
+                        <span>Direct retailer checkout via verified partner affiliate referral</span>
                       </div>
                     </div>
 
-                    <div className="mt-10 pt-8 border-t border-[#e5e5e5] space-y-3.5">
+                    {/* Call to Action: Large, attractive, clearly visible "Shop Now" button */}
+                    <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                       <a
                         href={currentProduct.affiliateLink || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-2.5 px-8 py-4 text-xs uppercase tracking-widest font-medium text-white bg-[#1a1a1a] hover:bg-black active:scale-[0.99] transition-all cursor-pointer shadow-sm"
+                        className="inline-flex items-center justify-center gap-3 px-10 py-4.5 bg-[#1a1a1a] hover:bg-black text-white text-xs sm:text-sm uppercase tracking-widest font-medium transition-all shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer"
                       >
-                        <span>View Product at Retailer</span>
-                        <ExternalLink className="w-4 h-4 stroke-[1.75]" />
+                        <span>Shop Now</span>
+                        <ExternalLink className="w-4 h-4 stroke-[2]" />
                       </a>
                       <button
                         type="button"
                         onClick={() => handleToggleWishlist(currentProduct.id)}
-                        className="w-full py-3 text-xs uppercase tracking-wider font-medium text-[#1a1a1a] border border-[#1a1a1a] hover:bg-[#1a1a1a]/5 transition-colors cursor-pointer"
+                        className="px-6 py-4 text-xs uppercase tracking-wider font-medium text-[#1a1a1a] border border-[#1a1a1a] hover:bg-[#1a1a1a]/5 transition-colors cursor-pointer text-center"
                       >
-                        {wishlist.includes(currentProduct.id)
-                          ? 'Saved in Wishlist ✓'
-                          : 'Save to Personal Wishlist ♡'}
+                        {wishlist.includes(currentProduct.id) ? 'Saved in Wishlist ✓' : 'Save to Wishlist ♡'}
                       </button>
                     </div>
                   </div>

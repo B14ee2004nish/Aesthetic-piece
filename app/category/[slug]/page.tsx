@@ -1,167 +1,116 @@
 import React from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { ArrowLeft, Sparkles } from 'lucide-react';
-import ProductGrid from '@/components/ProductGrid';
-import { ProductType } from '@/components/ProductCard';
+import { ArrowLeft, ExternalLink, Sparkles, ShoppingBag } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { defaultCategories } from '@/components/CategoryGrid';
+import { ProductType } from '@/components/ProductCard';
 
-// Slug to Category Name mapping
-const SLUG_TO_NAME: Record<string, string> = {
-  'lighting-lamps': 'Lighting & Lamps',
-  'vases-vessels': 'Vases & Vessels',
-  'textiles-throws': 'Textiles & Throws',
-  'mirrors-wall-decor': 'Mirrors & Wall Decor',
-  'candles-scents': 'Candles & Scents',
-  'decor-accents': 'Decor Accents',
-  'planters-pots': 'Planters & Pots',
-  'art-sculptures': 'Art & Sculptures',
-  'bedding-linens': 'Bedding & Linens',
-};
-
-// Fallback products for categories
-const ALL_FALLBACK_PRODUCTS: ProductType[] = [
-  {
-    id: 'prod_1',
-    name: 'Zen Basalt Stone Fountain',
-    category: 'Decor Accents',
-    description: 'Handcrafted natural basalt stone water fountain with gentle cascading stream, bringing calming acoustic ambiance to living sanctuaries.',
-    imageUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/zen-basalt-fountain',
-    price: 185.0,
-    featured: true,
-  },
-  {
-    id: 'prod_2',
-    name: 'Fluted Ceramic Vase',
-    category: 'Vases & Vessels',
-    description: 'Sculptural ribbed ceramic vessel with an unglazed matte chalk finish, designed to display dry florals or make a quiet statement.',
-    imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/fluted-ceramic-vase',
-    price: 58.0,
-    featured: true,
-  },
-  {
-    id: 'prod_3',
-    name: 'Dome Mushroom Lamp',
-    category: 'Lighting & Lamps',
-    description: 'Mid-century modern dome table lamp with warm ambient diffused LED illumination, featuring a weighted metal base and matte cashmere lacquer.',
-    imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/dome-mushroom-lamp',
-    price: 120.0,
-    featured: true,
-  },
-  {
-    id: 'prod_4',
-    name: 'Boho Pampas Grass',
-    category: 'Decor Accents',
-    description: 'Naturally dried fluffy neutral pampas plumes adding soft architectural movement, tactile richness, and organic texture to quiet interior corners.',
-    imageUrl: 'https://images.unsplash.com/photo-1508615039623-a25605d2b022?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/boho-pampas-grass',
-    price: 34.0,
-    featured: false,
-  },
-  {
-    id: 'prod_5',
-    name: 'Arched Brass Mirror',
-    category: 'Mirrors & Wall Decor',
-    description: 'Slim antique brass arched mantle mirror crafted from iron and distortion-free hand-finished glass, catching natural light across entryways.',
-    imageUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/arched-brass-mirror',
-    price: 240.0,
-    featured: true,
-  },
-  {
-    id: 'prod_6',
-    name: 'Linen Cushions',
-    category: 'Textiles & Throws',
-    description: 'Washed French flax linen throw pillow covers with raw frayed fringe detailing and plush cruelty-free down-alternative feather inserts.',
-    imageUrl: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/linen-cushions',
-    price: 48.0,
-    featured: true,
-  },
-  {
-    id: 'prod_7',
-    name: 'Ribbed Planter',
-    category: 'Vases & Vessels',
-    description: 'Architectural stoneware planter with vertical grooved fluting and internal drainage saucer, ideal for indoor olive trees, ferns, and fiddle leaf figs.',
-    imageUrl: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/ribbed-planter',
-    price: 64.0,
-    featured: false,
-  },
-  {
-    id: 'prod_8',
-    name: 'Plaster Wall Art',
-    category: 'Mirrors & Wall Decor',
-    description: 'Hand-sculpted textured plaster relief canvas featuring subtle geometric arches and tactile impasto contours in soft warm off-white and gypsum.',
-    imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/plaster-wall-art',
-    price: 195.0,
-    featured: true,
-  },
-  {
-    id: 'prod_9',
-    name: 'Travertine Candle',
-    category: 'Candles & Scents',
-    description: 'Hand-poured natural soy wax candle housed in a heavy solid honed beige travertine vessel with fragrance notes of sandalwood, amber, and cardamom.',
-    imageUrl: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/travertine-candle',
-    price: 72.0,
-    featured: true,
-  },
-  {
-    id: 'prod_10',
-    name: 'Flax Linen Sheets',
-    category: 'Textiles & Throws',
-    description: 'Stonewashed breathable pure European flax sheet set with an effortless lived-in drape that regulates body temperature and softens with every wash.',
-    imageUrl: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/flax-linen-sheets',
-    price: 260.0,
-    featured: false,
-  },
-  {
-    id: 'prod_11',
-    name: 'Frosted Window Clings',
-    category: 'Decor Accents',
-    description: 'Non-adhesive static-cling frosted privacy glass film that diffuses harsh direct sunlight into a soft luminous aesthetic glow while blocking UV rays.',
-    imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/frosted-window-clings',
-    price: 28.0,
-    featured: false,
-  },
-  {
-    id: 'prod_12',
-    name: 'Travertine Tray',
-    category: 'Decor Accents',
-    description: 'Carved raw natural beige travertine stone vanity tray with smooth rounded beveled edges, ideal for perfumes, jewelry, keys, or coffee table styling.',
-    imageUrl: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80',
-    affiliateLink: 'https://aestheticpiece.example.com/item/travertine-tray',
-    price: 88.0,
-    featured: true,
-  },
-];
+export const dynamic = 'force-dynamic';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }> | { slug: string };
 }
 
+// Fallback products for initial demonstration and seed alignment
+const FALLBACK_CATEGORY_PRODUCTS: Record<string, ProductType[]> = {
+  'home-decor': [
+    {
+      id: 'prod_hd_1',
+      name: 'Decorative Vases',
+      category: 'Home Décor',
+      description: 'Sculptural fluted ceramic vessel with a matte chalk finish, designed for displaying dry stems or making a quiet architectural statement.',
+      imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+      affiliateLink: 'https://www.amazon.com/s?k=decorative+vases+home+decor&tag=aestheticpiece-20',
+      price: 68.0,
+      featured: true,
+    },
+    {
+      id: 'prod_hd_2',
+      name: 'Tabletop Fountains',
+      category: 'Home Décor',
+      description: 'Handcrafted natural basalt stone indoor water fountain with gentle cascading stream, bringing calming acoustic ambiance to living rooms.',
+      imageUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+      affiliateLink: 'https://www.amazon.com/s?k=tabletop+water+fountains+indoor&tag=aestheticpiece-20',
+      price: 145.0,
+      featured: true,
+    },
+    {
+      id: 'prod_hd_3',
+      name: 'Decorative Lamps',
+      category: 'Home Décor',
+      description: 'Mid-century modern dome table luminaire with warm ambient diffused LED illumination, featuring a weighted metal base and satin cashmere lacquer.',
+      imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80',
+      affiliateLink: 'https://www.amazon.com/s?k=decorative+mushroom+table+lamps&tag=aestheticpiece-20',
+      price: 110.0,
+      featured: true,
+    },
+    {
+      id: 'prod_hd_4',
+      name: 'Wall Decorations',
+      category: 'Home Décor',
+      description: 'Hand-sculpted textured plaster relief canvas and slim arched brass mantle accent crafted for serene living spaces and entryways.',
+      imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+      affiliateLink: 'https://www.amazon.com/s?k=modern+aesthetic+wall+decorations&tag=aestheticpiece-20',
+      price: 185.0,
+      featured: true,
+    },
+    {
+      id: 'prod_hd_5',
+      name: 'Artificial Flowers',
+      category: 'Home Décor',
+      description: 'Naturally dried neutral pampas plumes and lifelike silk botanical stems adding soft movement, tactile richness, and organic texture to quiet corners.',
+      imageUrl: 'https://images.unsplash.com/photo-1508615039623-a25605d2b022?auto=format&fit=crop&w=800&q=80',
+      affiliateLink: 'https://www.amazon.com/s?k=artificial+flowers+dried+botanicals&tag=aestheticpiece-20',
+      price: 38.0,
+      featured: false,
+    },
+  ],
+};
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const resolvedParams = await Promise.resolve(params);
   const slug = resolvedParams.slug;
-  const categoryName = SLUG_TO_NAME[slug] || slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-  // Category meta
-  const matchedCategoryMeta = defaultCategories.find((c) => c.slug === slug);
-
+  let categoryName = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  let categoryDescription = `Explore our curated selection of ${categoryName.toLowerCase()} designed to elevate your living space.`;
+  let categoryImageUrl: string | null = null;
+  let categoryAffiliateLink: string | null = null;
   let products: ProductType[] = [];
 
   try {
+    // 1. Fetch specific category details from the database
+    const dbCategory = await prisma.category.findFirst({
+      where: {
+        OR: [
+          { slug },
+          { name: { equals: categoryName } },
+        ],
+      },
+    });
+
+    if (dbCategory) {
+      categoryName = dbCategory.name;
+      if (dbCategory.description) {
+        categoryDescription = dbCategory.description;
+      }
+      categoryImageUrl = dbCategory.imageUrl;
+      categoryAffiliateLink = dbCategory.affiliateLink;
+    } else {
+      // Check defaultCategories list
+      const matchedMeta = defaultCategories.find((c) => c.slug === slug);
+      if (matchedMeta) {
+        categoryName = matchedMeta.name;
+        if (matchedMeta.description) categoryDescription = matchedMeta.description;
+        categoryImageUrl = matchedMeta.imageUrl || null;
+        categoryAffiliateLink = matchedMeta.affiliateLink || null;
+      }
+    }
+
+    // 2. Fetch all products that belong to this category (via categoryId, category name, or categoryRel.slug)
     const dbProducts = await prisma.product.findMany({
       where: {
         OR: [
+          ...(dbCategory ? [{ categoryId: dbCategory.id }] : []),
           { category: { contains: categoryName } },
           { categoryRel: { slug } },
         ],
@@ -179,52 +128,151 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         affiliateLink: p.affiliateLink,
         price: p.price ?? undefined,
         featured: p.featured,
-        createdAt: p.createdAt.toISOString(),
+        createdAt: p.createdAt ? p.createdAt.toISOString() : undefined,
       }));
-    } else {
-      // Filter from fallback data
-      products = ALL_FALLBACK_PRODUCTS.filter(
-        (p) => p.category.toLowerCase() === categoryName.toLowerCase()
-      );
+    } else if (FALLBACK_CATEGORY_PRODUCTS[slug]) {
+      products = FALLBACK_CATEGORY_PRODUCTS[slug];
     }
   } catch (error) {
-    products = ALL_FALLBACK_PRODUCTS.filter(
-      (p) => p.category.toLowerCase() === categoryName.toLowerCase()
-    );
+    console.warn('Database query failed for category page, using fallbacks:', error);
+    if (FALLBACK_CATEGORY_PRODUCTS[slug]) {
+      products = FALLBACK_CATEGORY_PRODUCTS[slug];
+    }
   }
 
   return (
-    <div className="py-12 sm:py-16">
+    <div className="py-12 sm:py-16 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#737373] mb-8">
           <Link href="/" className="hover:text-[#1a1a1a] transition-colors flex items-center gap-1.5">
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Collection</span>
+            <span>Storefront</span>
           </Link>
           <span>/</span>
           <span className="text-[#1a1a1a] font-medium">{categoryName}</span>
         </div>
 
-        {/* Category Header Banner */}
-        <div className="pb-8 border-b border-[#e5e5e5]">
-          <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold">
-            Atmosphere &middot; Category
-          </span>
-          <h1 className="font-serif text-3xl sm:text-5xl text-[#1a1a1a] font-normal mt-2">
-            {categoryName}
-          </h1>
-          <p className="mt-3 text-sm sm:text-base text-[#525252] font-light max-w-2xl leading-relaxed">
-            {matchedCategoryMeta?.description ||
-              `A thoughtfully curated collection of ${categoryName.toLowerCase()} selected for warm minimalism, tactile materials, and organic tranquility.`}
-          </p>
+        {/* Category Header with Name and Description (Requirement 3) */}
+        <div className="pb-10 border-b border-[#e5e5e5] mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold">
+                Atmosphere &middot; Category Collection
+              </span>
+              <h1 className="font-serif text-3xl sm:text-5xl text-[#1a1a1a] font-normal mt-2">
+                {categoryName}
+              </h1>
+              <p className="mt-4 text-sm sm:text-base text-[#525252] font-light max-w-2xl leading-relaxed">
+                {categoryDescription}
+              </p>
+            </div>
+
+            {categoryAffiliateLink && (
+              <a
+                href={categoryAffiliateLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f4f2ee] border border-[#e5e5e5] text-xs uppercase tracking-wider text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-colors self-start md:self-end"
+              >
+                <span>Shop {categoryName} on Amazon</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
         </div>
 
-        {/* Product Grid */}
-        <ProductGrid
-          products={products}
-          activeCategory={categoryName}
-        />
+        {/* Product Grid: Clean, responsive grid (grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8) (Requirement 3) */}
+        {products.length === 0 ? (
+          <div className="py-20 text-center bg-white border border-dashed border-[#e5e5e5] p-8">
+            <ShoppingBag className="w-8 h-8 text-[#a3a3a3] mx-auto mb-3 stroke-[1.5]" />
+            <p className="font-serif text-xl text-[#1a1a1a]">No products yet in {categoryName}</p>
+            <p className="mt-2 text-sm text-[#737373] max-w-md mx-auto">
+              Add products to this category from the Admin Dashboard and they will automatically appear here.
+            </p>
+            <Link
+              href="/admin"
+              className="inline-block mt-6 px-6 py-2.5 text-xs uppercase tracking-wider text-white bg-[#1a1a1a] hover:bg-black transition-colors"
+            >
+              Add Product in Admin
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map((product) => (
+              <article
+                key={product.id}
+                className="group relative flex flex-col bg-white border border-[#e5e5e5] hover:border-[#1a1a1a] transition-all duration-300"
+              >
+                {/* Product Image */}
+                <Link
+                  href={`/product/${product.id}`}
+                  className="relative aspect-[4/5] w-full overflow-hidden bg-[#f4f2ee] block cursor-pointer"
+                >
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                    loading="lazy"
+                  />
+
+                  {product.featured && (
+                    <div className="absolute top-3 left-3 bg-[#1a1a1a] text-white text-[10px] tracking-[0.18em] uppercase font-semibold px-2.5 py-1 z-10">
+                      Featured Pick
+                    </div>
+                  )}
+                </Link>
+
+                {/* Details Container */}
+                <div className="p-6 flex flex-col flex-grow justify-between bg-white">
+                  <div>
+                    {/* Category Name */}
+                    <span className="text-[11px] uppercase tracking-[0.2em] font-medium text-[#737373]">
+                      {product.category}
+                    </span>
+
+                    {/* Product Name */}
+                    <Link
+                      href={`/product/${product.id}`}
+                      className="block font-serif text-lg font-medium text-[#1a1a1a] mt-1 group-hover:text-black line-clamp-1 hover:underline decoration-1 underline-offset-2"
+                    >
+                      {product.name}
+                    </Link>
+
+                    {/* Short Description */}
+                    <p className="mt-2 text-xs text-[#525252] leading-relaxed line-clamp-2 font-light">
+                      {product.description}
+                    </p>
+                  </div>
+
+                  {/* Footer with Price and "Shop Now" Button (Requirement 3) */}
+                  <div className="mt-6 pt-4 border-t border-[#f0ede6] flex items-center justify-between gap-3">
+                    {/* Price */}
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-[#a3a3a3] block">
+                        Guide Price
+                      </span>
+                      <span className="font-serif text-base font-medium text-[#1a1a1a]">
+                        ${product.price !== undefined && product.price !== null ? Number(product.price).toFixed(2) : '0.00'}
+                      </span>
+                    </div>
+
+                    {/* "Shop Now" Button linking to affiliateLink */}
+                    <a
+                      href={product.affiliateLink || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-white bg-[#1a1a1a] hover:bg-black active:scale-[0.98] transition-all rounded-none cursor-pointer"
+                    >
+                      <span>Shop Now</span>
+                      <ExternalLink className="w-3.5 h-3.5 stroke-[1.75]" />
+                    </a>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

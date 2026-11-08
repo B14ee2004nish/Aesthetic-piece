@@ -1,23 +1,64 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import {
-  ArrowLeft,
-  ExternalLink,
-  Heart,
-  ShieldCheck,
-  Sparkles,
-  Layers,
-  Compass,
-  Check
-} from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import ProductCard, { ProductType } from '@/components/ProductCard';
 
 export const dynamic = 'force-dynamic';
 
-// Curated fallback items if database is queried before seeding
+// Curated fallback items if database is accessed before seeding
 const FALLBACK_PRODUCTS: ProductType[] = [
+  {
+    id: 'prod_hd_1',
+    name: 'Decorative Vases',
+    category: 'Home Décor',
+    description: 'Sculptural fluted ceramic vessel with a matte chalk finish, designed for displaying dry stems or making a quiet architectural statement on consoles.',
+    imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=decorative+vases+home+decor&tag=aestheticpiece-20',
+    price: 68.0,
+    featured: true,
+  },
+  {
+    id: 'prod_hd_2',
+    name: 'Tabletop Fountains',
+    category: 'Home Décor',
+    description: 'Handcrafted natural basalt stone indoor water fountain with gentle cascading stream, bringing calming acoustic ambiance to living sanctuaries.',
+    imageUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=tabletop+water+fountains+indoor&tag=aestheticpiece-20',
+    price: 145.0,
+    featured: true,
+  },
+  {
+    id: 'prod_hd_3',
+    name: 'Decorative Lamps',
+    category: 'Home Décor',
+    description: 'Mid-century modern dome table luminaire with warm ambient diffused LED illumination, featuring a weighted metal base and satin cashmere lacquer.',
+    imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=decorative+mushroom+table+lamps&tag=aestheticpiece-20',
+    price: 110.0,
+    featured: true,
+  },
+  {
+    id: 'prod_hd_4',
+    name: 'Wall Decorations',
+    category: 'Home Décor',
+    description: 'Hand-sculpted textured plaster relief canvas and slim arched brass mantle accent crafted for serene living spaces and entryways.',
+    imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=modern+aesthetic+wall+decorations&tag=aestheticpiece-20',
+    price: 185.0,
+    featured: true,
+  },
+  {
+    id: 'prod_hd_5',
+    name: 'Artificial Flowers',
+    category: 'Home Décor',
+    description: 'Naturally dried neutral pampas plumes and lifelike silk botanical stems adding soft movement, tactile richness, and organic texture to quiet corners.',
+    imageUrl: 'https://images.unsplash.com/photo-1508615039623-a25605d2b022?auto=format&fit=crop&w=800&q=80',
+    affiliateLink: 'https://www.amazon.com/s?k=artificial+flowers+dried+botanicals&tag=aestheticpiece-20',
+    price: 38.0,
+    featured: false,
+  },
   {
     id: 'prod_1',
     name: 'Zen Basalt Stone Fountain',
@@ -152,7 +193,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   let similarProducts: ProductType[] = [];
 
   try {
-    // 1. Fetch single product by its ID from the database
+    // 1. Dynamically fetch the product by ID from SQLite database
     const dbProduct = await prisma.product.findUnique({
       where: { id },
       include: { categoryRel: true },
@@ -168,18 +209,21 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         affiliateLink: dbProduct.affiliateLink,
         price: dbProduct.price ?? undefined,
         featured: dbProduct.featured,
-        createdAt: dbProduct.createdAt.toISOString(),
+        categoryId: dbProduct.categoryId,
+        createdAt: dbProduct.createdAt ? dbProduct.createdAt.toISOString() : undefined,
       };
     } else {
-      // Check fallback list
       product = FALLBACK_PRODUCTS.find((p) => p.id === id) || null;
     }
 
     if (product) {
-      // 2. Fetch similar products sharing the same category (exclude current product)
+      // 2. Fetch similar products sharing the same category
       const dbSimilar = await prisma.product.findMany({
         where: {
-          category: product.category,
+          OR: [
+            { category: product.category },
+            ...(product.categoryId ? [{ categoryId: product.categoryId }] : []),
+          ],
           NOT: { id: product.id },
         },
         take: 3,
@@ -196,15 +240,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           affiliateLink: p.affiliateLink,
           price: p.price ?? undefined,
           featured: p.featured,
-          createdAt: p.createdAt.toISOString(),
+          createdAt: p.createdAt ? p.createdAt.toISOString() : undefined,
         }));
       } else {
-        // Fallback similar
         similarProducts = FALLBACK_PRODUCTS.filter(
-          (p) => p.category === product?.category && p.id !== product?.id
+          (p) => p.category.toLowerCase() === product?.category.toLowerCase() && p.id !== product?.id
         ).slice(0, 3);
 
-        // If category has only 1 item, display other curated pieces
         if (similarProducts.length === 0) {
           similarProducts = FALLBACK_PRODUCTS.filter((p) => p.id !== product?.id).slice(0, 3);
         }
@@ -215,7 +257,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     product = FALLBACK_PRODUCTS.find((p) => p.id === id) || null;
     if (product) {
       similarProducts = FALLBACK_PRODUCTS.filter(
-        (p) => p.category === product?.category && p.id !== product?.id
+        (p) => p.category.toLowerCase() === product?.category.toLowerCase() && p.id !== product?.id
       ).slice(0, 3);
     }
   }
@@ -227,16 +269,16 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const categorySlug = product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   return (
-    <div className="py-10 sm:py-16 min-h-screen">
+    <div className="py-10 sm:py-16 lg:py-24 min-h-screen bg-[#fcfbf9]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#737373] mb-8 sm:mb-12">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#737373] mb-8 sm:mb-14">
           <Link href="/" className="hover:text-[#1a1a1a] transition-colors flex items-center gap-1.5">
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Collection</span>
+            <span>Storefront</span>
           </Link>
           <span>/</span>
-          <Link href={`/category/${categorySlug}`} className="hover:text-[#1a1a1a] transition-colors">
+          <Link href={`/category/${categorySlug}`} className="hover:text-[#1a1a1a] transition-colors font-medium">
             {product.category}
           </Link>
           <span>/</span>
@@ -245,154 +287,109 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </span>
         </nav>
 
-        {/* Product Showcase Section: 2 Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 pb-20 border-b border-[#e5e5e5]">
-          {/* Left Column: Editorial Product Photography */}
-          <div className="lg:col-span-7">
-            <div className="relative aspect-[4/5] w-full bg-[#f4f2ee] border border-[#e5e5e5] overflow-hidden group">
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-103"
-              />
+        {/* Spacious, Beautiful Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-20 items-start pb-20 border-b border-[#e5e5e5]">
+          {/* Left Column (Image): Neat, properly sized container with subtle styling */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-start">
+            <div className="w-full max-w-[440px]">
+              <div className="relative aspect-square w-full bg-white border border-[#e5e5e5] p-6 sm:p-10 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] flex items-center justify-center">
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-full h-full max-h-[360px] object-contain object-center transition-transform duration-500 ease-out hover:scale-103"
+                />
 
-              {product.featured && (
-                <div className="absolute top-4 left-4 bg-[#1a1a1a] text-white text-[10px] tracking-[0.2em] uppercase font-semibold px-3 py-1">
-                  Featured Curated Pick
-                </div>
-              )}
-            </div>
-
-            {/* Quality & Craftsmanship Badges */}
-            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-[#f0ede6]">
-              <div className="flex flex-col items-center text-center p-3 bg-[#faf9f6] border border-[#e5e5e5]">
-                <ShieldCheck className="w-4 h-4 text-[#8c7b6c] mb-1.5" />
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#1a1a1a]">Verified</span>
-                <span className="text-[10px] text-[#737373] mt-0.5">Craftsmanship</span>
-              </div>
-
-              <div className="flex flex-col items-center text-center p-3 bg-[#faf9f6] border border-[#e5e5e5]">
-                <Sparkles className="w-4 h-4 text-[#8c7b6c] mb-1.5" />
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#1a1a1a]">Natural</span>
-                <span className="text-[10px] text-[#737373] mt-0.5">Organic Materials</span>
-              </div>
-
-              <div className="flex flex-col items-center text-center p-3 bg-[#faf9f6] border border-[#e5e5e5]">
-                <Compass className="w-4 h-4 text-[#8c7b6c] mb-1.5" />
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#1a1a1a]">Timeless</span>
-                <span className="text-[10px] text-[#737373] mt-0.5">Restrained Design</span>
+                {product.featured && (
+                  <div className="absolute top-4 left-4 bg-[#1a1a1a] text-white text-[10px] tracking-[0.2em] uppercase font-semibold px-2.5 py-1 shadow-xs">
+                    Featured Pick
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right Column: Editorial Product Details & Affiliate Link */}
-          <div className="lg:col-span-5 flex flex-col justify-between">
+          {/* Right Column (Information): Clean, uncluttered, and spacious typography */}
+          <div className="lg:col-span-7 flex flex-col space-y-7">
             <div>
-              {/* Category Tag */}
+              {/* Category */}
               <Link
                 href={`/category/${categorySlug}`}
-                className="inline-block text-[11px] uppercase tracking-[0.22em] text-[#737373] font-medium hover:text-[#1a1a1a] transition-colors"
+                className="inline-block text-[11px] uppercase tracking-[0.25em] text-[#737373] hover:text-[#1a1a1a] font-medium transition-colors"
               >
                 {product.category}
               </Link>
 
-              {/* Product Headline */}
-              <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#1a1a1a] mt-2 leading-[1.15]">
+              {/* Title */}
+              <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#1a1a1a] mt-2.5 tracking-tight leading-[1.15]">
                 {product.name}
               </h1>
 
-              {/* Price Tag */}
-              <div className="mt-4 pb-6 border-b border-[#e5e5e5] flex items-baseline gap-3">
-                {product.price !== undefined && product.price !== null && product.price > 0 ? (
-                  <>
-                    <span className="font-serif text-2xl font-medium text-[#1a1a1a]">
-                      ${Number(product.price).toFixed(2)}
-                    </span>
-                    <span className="text-xs text-[#737373] uppercase tracking-wider font-light">
-                      Estimated Retail Guide Price
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-sm text-[#737373] italic">Curated Design Selection</span>
-                )}
-              </div>
-
-              {/* Curator Description */}
-              <div className="mt-6 space-y-4">
-                <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#1a1a1a]">
-                  Curator&apos;s Notes &amp; Story
+              {/* Price */}
+              <div className="mt-4 pb-6 border-b border-[#e5e5e5]">
+                <span className="font-serif text-3xl sm:text-4xl font-normal text-[#1a1a1a] tracking-tight">
+                  ${product.price !== undefined && product.price !== null && product.price > 0
+                    ? Number(product.price).toFixed(2)
+                    : '0.00'}
                 </span>
-                <p className="text-sm sm:text-base text-[#525252] leading-relaxed font-light">
-                  {product.description}
-                </p>
-              </div>
-
-              {/* Material & Architectural Attributes */}
-              <div className="mt-8 pt-6 border-t border-[#f0ede6] space-y-2.5 text-xs text-[#525252]">
-                <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-[#8c7b6c]" />
-                  <span>Sourced for tactile textures and neutral interior warmth</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-[#8c7b6c]" />
-                  <span>Direct merchant purchase through verified partner affiliate link</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-[#8c7b6c]" />
-                  <span>Curated for modern sanctuaries, living spaces, and consoles</span>
-                </div>
               </div>
             </div>
 
-            {/* Outbound Affiliate CTA & Actions */}
-            <div className="mt-10 pt-8 border-t border-[#e5e5e5] space-y-3.5">
-              {/* Primary Affiliate Link Button */}
+            {/* Description */}
+            <div className="space-y-3">
+              <h2 className="text-xs uppercase tracking-[0.2em] font-semibold text-[#1a1a1a]">
+                Description
+              </h2>
+              <p className="text-base sm:text-lg text-[#525252] leading-relaxed font-light">
+                {product.description}
+              </p>
+            </div>
+
+            {/* Call to Action: Large, clearly visible "Shop Now" button */}
+            <div className="pt-6 border-t border-[#e5e5e5]">
               <a
                 href={product.affiliateLink || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2.5 px-8 py-4 text-xs uppercase tracking-widest font-medium text-white bg-[#1a1a1a] hover:bg-black active:scale-[0.99] transition-all cursor-pointer shadow-sm"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-12 py-4.5 bg-[#1a1a1a] hover:bg-black text-white text-xs sm:text-sm uppercase tracking-widest font-medium transition-all shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer"
               >
-                <span>View Product at Retailer</span>
-                <ExternalLink className="w-4 h-4 stroke-[1.75]" />
+                <span>Shop Now</span>
+                <ExternalLink className="w-4 h-4 stroke-[2]" />
               </a>
 
-              <p className="text-[11px] text-[#737373] text-center font-light">
-                Opens directly in retailer storefront with active curation pricing.
+              <p className="mt-3 text-[11px] text-[#737373] font-light">
+                Opens directly in official partner retailer store in a new tab.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Similar Products: "You May Also Like" Section */}
-        <section className="mt-20 sm:mt-24">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 pb-4 border-b border-[#e5e5e5]">
-            <div>
-              <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold">
-                Atmosphere Matching
-              </span>
-              <h2 className="font-serif text-2xl sm:text-3xl text-[#1a1a1a] font-normal mt-1">
-                You May Also Like
-              </h2>
+        {/* Similar Products: "You May Also Like" */}
+        {similarProducts.length > 0 && (
+          <section className="mt-20 sm:mt-28">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 pb-4 border-b border-[#e5e5e5]">
+              <div>
+                <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold">
+                  Atmosphere Matching
+                </span>
+                <h2 className="font-serif text-2xl sm:text-3xl text-[#1a1a1a] font-normal mt-1">
+                  You May Also Like
+                </h2>
+              </div>
+              <Link
+                href={`/category/${categorySlug}`}
+                className="mt-2 sm:mt-0 text-xs uppercase tracking-wider text-[#1a1a1a] hover:underline font-medium"
+              >
+                Browse all {product.category} &rarr;
+              </Link>
             </div>
-            <Link
-              href={`/category/${categorySlug}`}
-              className="mt-2 sm:mt-0 text-xs uppercase tracking-wider text-[#1a1a1a] hover:underline font-medium"
-            >
-              Browse all {product.category} &rarr;
-            </Link>
-          </div>
 
-          {similarProducts.length === 0 ? (
-            <p className="text-sm text-[#737373]">No other items in this category currently.</p>
-          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {similarProducts.map((similar) => (
                 <ProductCard key={similar.id} product={similar} />
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
       </div>
     </div>
   );

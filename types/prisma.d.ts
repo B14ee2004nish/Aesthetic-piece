@@ -20,6 +20,7 @@ declare module '@prisma/client' {
     slug: string;
     description?: string | null;
     imageUrl?: string | null;
+    affiliateLink?: string | null;
     createdAt: Date;
     updatedAt: Date;
   }
@@ -34,6 +35,7 @@ declare module '@prisma/client' {
       findUnique(args?: any): Promise<Product | null>;
       create(args: any): Promise<Product>;
       upsert(args: any): Promise<Product>;
+      update(args: any): Promise<Product>;
       delete(args: any): Promise<Product>;
     };
     category: {
@@ -42,6 +44,8 @@ declare module '@prisma/client' {
       findUnique(args?: any): Promise<Category | null>;
       create(args: any): Promise<Category>;
       upsert(args: any): Promise<Category>;
+      update(args: any): Promise<Category>;
+      delete(args: any): Promise<Category>;
     };
     [key: string]: any;
   }

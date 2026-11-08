@@ -179,3 +179,82 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// PATCH /api/products
+// Body: { id, affiliateLink, name, price, featured, description }
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, affiliateLink, name, price, featured, description } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Product ID is required for update' },
+        { status: 400 }
+      );
+    }
+
+    const updateData: any = {};
+    if (affiliateLink !== undefined) updateData.affiliateLink = affiliateLink.trim();
+    if (name !== undefined) updateData.name = name.trim();
+    if (price !== undefined) updateData.price = parseFloat(price);
+    if (featured !== undefined) updateData.featured = Boolean(featured);
+    if (description !== undefined) updateData.description = description.trim();
+
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Product updated successfully',
+      data: updatedProduct,
+    });
+  } catch (error: any) {
+    console.error('Failed to update product:', error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to update product' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/products
+// Query param: ?id=xxx or JSON body { id: 'xxx' }
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    let id = searchParams.get('id');
+
+    if (!id) {
+      try {
+        const body = await request.json();
+        id = body.id;
+      } catch (e) {}
+    }
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Product ID is required for deletion' },
+        { status: 400 }
+      );
+    }
+
+    await prisma.product.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Product deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('Failed to delete product:', error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to delete product' },
+      { status: 500 }
+    );
+  }
+}
+

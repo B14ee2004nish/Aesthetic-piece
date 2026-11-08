@@ -13,6 +13,9 @@ export interface ProductType {
   affiliateLink: string;
   price?: number | null;
   featured?: boolean;
+  categoryId?: string | null;
+  rating?: number;
+  reviews?: number;
   createdAt?: string | Date;
 }
 
@@ -143,7 +146,7 @@ export default function ProductCard({
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium tracking-wide text-white bg-[#1a1a1a] hover:bg-black active:scale-[0.98] transition-all rounded-none cursor-pointer"
           >
-            <span>View Source</span>
+            <span>Shop Now</span>
             <ExternalLink className="w-3.5 h-3.5 stroke-[1.75]" />
           </a>
         </div>
