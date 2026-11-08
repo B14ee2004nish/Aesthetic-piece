@@ -1,0 +1,6 @@
+{
+  "name": "Aesthetic Piece - Curated Living & Style",
+  "description": "Minimalist, editorial home decor showcase built with Next.js 14 App Router, Prisma ORM, SQLite database, and Tailwind CSS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
