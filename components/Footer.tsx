@@ -2,14 +2,21 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Heart, Sparkles } from 'lucide-react';
+import {
+  Sparkles,
+  Mail,
+  Phone,
+  Instagram,
+  Facebook,
+  Music2,
+} from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#1a1a1a] text-[#ededed] border-t border-[#333333] pt-16 pb-12">
+    <footer className="bg-[#111111] text-[#ededed] border-t border-[#2a2a2a] pt-20 pb-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-[#333333]">
-          {/* Brand Philosophy */}
+          {/* Brand Philosophy & Contact Info */}
           <div className="md:col-span-5 flex flex-col justify-between">
             <div>
               <div className="flex items-baseline gap-2">
@@ -24,6 +31,58 @@ export default function Footer() {
               <p className="mt-5 text-sm text-[#a3a3a3] font-light leading-relaxed max-w-sm">
                 A design curation dedicated to organic warmth, sculptural ceramics, calming water features, and timeless everyday essentials for spaces of quiet mindfulness.
               </p>
+
+              {/* Contact Info */}
+              <div className="mt-6 space-y-2.5 text-sm text-[#d4d4d4] font-light">
+                <a
+                  href="mailto:modernstyle2026@gmail.com"
+                  className="flex items-center gap-2.5 hover:text-white transition-colors w-fit"
+                >
+                  <Mail className="w-4 h-4 text-[#c2b29d] shrink-0" />
+                  <span>modernstyle2026@gmail.com</span>
+                </a>
+                <a
+                  href="tel:03390002230"
+                  className="flex items-center gap-2.5 hover:text-white transition-colors w-fit"
+                >
+                  <Phone className="w-4 h-4 text-[#c2b29d] shrink-0" />
+                  <span>03390002230</span>
+                </a>
+              </div>
+
+              {/* Social Media Links */}
+              <div className="mt-6 flex items-center gap-3">
+                <a
+                  href="https://instagram.com/aestheticpiece"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  title="Instagram"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#1d1d1d] border border-[#333333] text-[#d4d4d4] hover:bg-[#faf9f6] hover:text-[#111111] hover:border-[#faf9f6] transition-all"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://facebook.com/aestheticpiece"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  title="Facebook"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#1d1d1d] border border-[#333333] text-[#d4d4d4] hover:bg-[#faf9f6] hover:text-[#111111] hover:border-[#faf9f6] transition-all"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://tiktok.com/@aestheticpiece"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TikTok"
+                  title="TikTok"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#1d1d1d] border border-[#333333] text-[#d4d4d4] hover:bg-[#faf9f6] hover:text-[#111111] hover:border-[#faf9f6] transition-all"
+                >
+                  <Music2 className="w-4 h-4" />
+                </a>
+              </div>
             </div>
 
             <div className="mt-8 flex items-center gap-2 text-xs text-[#737373]">

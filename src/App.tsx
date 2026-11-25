@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Heart,
@@ -16,8 +16,17 @@ import {
   Check,
   SlidersHorizontal,
   Eye,
+  EyeOff,
   Filter,
-  Star
+  Star,
+  Lock,
+  LogOut,
+  Menu,
+  Mail,
+  Phone,
+  Instagram,
+  Facebook,
+  Music2
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
@@ -25,6 +34,7 @@ import CategoryGrid, { defaultCategories, CategoryItem } from '@/components/Cate
 import ProductGrid from '@/components/ProductGrid';
 import ProductCard, { ProductType } from '@/components/ProductCard';
 import AdminProductForm from '@/components/AdminProductForm';
+import FloatingWhatsApp from '@/components/FloatingWhatsApp';
 
 // Initial curated home decor items including Home Décor category and atmosphere picks
 const INITIAL_PRODUCTS: ProductType[] = [
@@ -201,7 +211,8 @@ const INITIAL_PRODUCTS: ProductType[] = [
 ];
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'category' | 'admin' | 'code' | 'product'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'categories' | 'about' | 'category' | 'admin-login' | 'admin-add-product' | 'admin' | 'code' | 'product'>('home');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [selectedProductId, setSelectedProductId] = useState<string>('prod_1');
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('all');
   const [products, setProducts] = useState<ProductType[]>(INITIAL_PRODUCTS);
@@ -211,6 +222,37 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState<boolean>(false);
   const [quickViewProduct, setQuickViewProduct] = useState<ProductType | null>(null);
+  const [registeredAdmin] = useState<{ email: string; password: string } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem('ap_preview_admin_account');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('isAdminAuthenticated') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [adminLoginEmail, setAdminLoginEmail] = useState<string>('');
+  const [adminLoginPassword, setAdminLoginPassword] = useState<string>('');
+  const [showAdminPassword, setShowAdminPassword] = useState<boolean>(false);
+  const [adminLoginError, setAdminLoginError] = useState<string>('');
+
+  useEffect(() => {
+    if (currentView === 'admin' || currentView === 'admin-add-product') {
+      const isAuth = localStorage.getItem('isAdminAuthenticated') === 'true';
+      if (!isAuth) {
+        setIsAdminLoggedIn(false);
+        setCurrentView('admin-login');
+      }
+    }
+  }, [currentView]);
 
   // Toggle wishlist
   const handleToggleWishlist = (productId: string) => {
@@ -266,9 +308,9 @@ export default function App() {
   const currentCategoryMeta = defaultCategories.find((c) => c.slug === selectedCategorySlug);
 
   return (
-    <div className="min-h-screen bg-[#fcfbf9] text-[#1a1a1a] flex flex-col font-sans selection:bg-[#1a1a1a] selection:text-white">
+    <div className="min-h-screen bg-[#faf9f6] text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-white">
       {/* Top Banner Notice */}
-      <div className="bg-[#1a1a1a] text-[#ededed] px-4 py-2 text-center text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3">
+      <div className="bg-[#111111] text-[#ededed] px-4 py-2 text-center text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3">
         <Sparkles className="w-3.5 h-3.5 text-[#c2b29d]" />
         <span>Next.js 14 App Router &middot; SQLite &middot; Prisma ORM &middot; Curated Decor</span>
         <button
@@ -281,73 +323,69 @@ export default function App() {
       </div>
 
       {/* Main Brand Header */}
-      <header className="sticky top-0 z-40 bg-[#fcfbf9]/95 backdrop-blur-md border-b border-[#e5e5e5] transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
+      <header className="sticky top-0 z-40 bg-[#faf9f6]/92 backdrop-blur-md border-b border-[#e5e5e5] transition-all">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+          <div className="flex items-center justify-between h-24">
             {/* Logo & Tagline */}
             <div className="flex flex-col cursor-pointer" onClick={handleBackToStorefront}>
-              <div className="group inline-flex items-baseline gap-2">
-                <span className="font-serif text-2xl sm:text-3xl font-medium tracking-tight text-[#1a1a1a] transition-colors group-hover:text-black">
+              <div className="group inline-flex items-baseline gap-2.5">
+                <span className="font-serif text-3xl sm:text-4xl font-medium tracking-tight text-[#111111] transition-colors group-hover:text-black">
                   Aesthetic Piece
                 </span>
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#1a1a1a]" />
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#111111]" />
               </div>
-              <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-medium mt-0.5">
+              <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-medium mt-1">
                 Curated Living & Style
               </span>
             </div>
 
             {/* Center Navigation Links */}
-            <nav className="hidden md:flex items-center gap-8 text-sm tracking-wide text-[#525252]">
+            <nav className="hidden md:flex items-center gap-10 text-sm tracking-wide text-[#525252]">
               <button
                 type="button"
                 onClick={handleBackToStorefront}
                 className={`transition-colors cursor-pointer ${
-                  currentView === 'home' ? 'text-[#1a1a1a] font-medium' : 'hover:text-[#1a1a1a]'
+                  currentView === 'home' ? 'text-[#111111] font-medium' : 'hover:text-[#111111]'
                 }`}
               >
-                Collection
+                Home
               </button>
               <button
                 type="button"
-                onClick={() => handleCategorySelect('lighting-lamps')}
-                className="hover:text-[#1a1a1a] transition-colors cursor-pointer"
+                onClick={() => {
+                  setCurrentView('categories');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`transition-colors cursor-pointer ${
+                  currentView === 'categories' ? 'text-[#111111] font-medium' : 'hover:text-[#111111]'
+                }`}
               >
-                Lighting
+                Categories
               </button>
               <button
                 type="button"
-                onClick={() => handleCategorySelect('vases-vessels')}
-                className="hover:text-[#1a1a1a] transition-colors cursor-pointer"
+                onClick={() => {
+                  setCurrentView('about');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`transition-colors cursor-pointer ${
+                  currentView === 'about' ? 'text-[#111111] font-medium' : 'hover:text-[#111111]'
+                }`}
               >
-                Ceramics
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCategorySelect('textiles-throws')}
-                className="hover:text-[#1a1a1a] transition-colors cursor-pointer"
-              >
-                Textiles
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCategorySelect('decor-accents')}
-                className="hover:text-[#1a1a1a] transition-colors cursor-pointer"
-              >
-                Accents
+                About
               </button>
             </nav>
 
             {/* Right Action Icons & Admin CTA */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-5">
               {/* Search Icon */}
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
                 aria-label="Search curated decor"
-                className="p-2.5 rounded-full text-[#1a1a1a] hover:bg-[#f0ede6] transition-colors cursor-pointer"
+                className="p-2.5 rounded-full text-[#111111] hover:bg-[#efede8] transition-colors cursor-pointer"
               >
-                <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
+                <Search className="w-5 h-5 stroke-[1.6]" />
               </button>
 
               {/* Heart / Wishlist Icon */}
@@ -355,11 +393,11 @@ export default function App() {
                 type="button"
                 onClick={() => setIsWishlistOpen(true)}
                 aria-label="View saved pieces"
-                className="relative p-2.5 rounded-full text-[#1a1a1a] hover:bg-[#f0ede6] transition-colors cursor-pointer"
+                className="relative p-2.5 rounded-full text-[#111111] hover:bg-[#efede8] transition-colors cursor-pointer"
               >
-                <Heart className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
+                <Heart className="w-5 h-5 stroke-[1.6]" />
                 {wishlist.length > 0 && (
-                  <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white bg-[#1a1a1a] rounded-full">
+                  <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white bg-[#111111] rounded-full">
                     {wishlist.length}
                   </span>
                 )}
@@ -368,18 +406,74 @@ export default function App() {
               {/* Admin & Manage Button */}
               <button
                 type="button"
-                onClick={() => setCurrentView('admin')}
-                className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-medium tracking-wide rounded-full border transition-all cursor-pointer ${
-                  currentView === 'admin'
-                    ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]'
-                    : 'bg-white text-[#1a1a1a] border-[#e5e5e5] hover:bg-[#f5f3ef] shadow-2xs'
+                onClick={() => {
+                  setAdminLoginError('');
+                  const isAuth =
+                    typeof window !== 'undefined' &&
+                    localStorage.getItem('isAdminAuthenticated') === 'true';
+                  setIsAdminLoggedIn(isAuth);
+                  setCurrentView(isAuth ? 'admin-add-product' : 'admin-login');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-medium tracking-wide rounded-full border transition-all cursor-pointer ${
+                  currentView === 'admin-login' || currentView === 'admin-add-product' || currentView === 'admin'
+                    ? 'bg-[#111111] text-white border-[#111111]'
+                    : 'bg-white text-[#111111] border-[#e5e5e5] hover:bg-[#111111] hover:text-white hover:border-[#111111] shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)]'
                 }`}
               >
-                <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#737373]" />
-                <span>Admin & Manage</span>
+                <ShieldCheck className="w-4 h-4 opacity-70" />
+                <span className="hidden sm:inline">Admin & Manage</span>
+                <span className="sm:hidden">Admin</span>
+              </button>
+
+              {/* Mobile Menu Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                aria-label="Toggle navigation menu"
+                className="md:hidden p-2 rounded-full text-[#111111] hover:bg-[#efede8] transition-colors cursor-pointer"
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
+
+          {isMobileMenuOpen && (
+            <nav className="md:hidden py-4 border-t border-[#e5e5e5] flex flex-col gap-3 text-sm text-[#525252]">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleBackToStorefront();
+                }}
+                className="py-1.5 text-left text-[#111111] font-medium cursor-pointer"
+              >
+                Home
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setCurrentView('categories');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="py-1.5 text-left hover:text-[#111111] cursor-pointer"
+              >
+                Categories
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setCurrentView('about');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="py-1.5 text-left hover:text-[#111111] cursor-pointer"
+              >
+                About
+              </button>
+            </nav>
+          )}
         </div>
       </header>
 
@@ -398,8 +492,62 @@ export default function App() {
               }}
             />
 
-            {/* Category Stacked Sections (Requirement 1) */}
-            <div id="products-section" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            {/* Browse Categories Grid Section */}
+            <section id="categories-section" className="pt-20 sm:pt-28 pb-4 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 sm:mb-12">
+                <div>
+                  <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-semibold block mb-2">
+                    Curated Atmospheres
+                  </span>
+                  <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#111111] font-normal tracking-tight">
+                    Browse Categories
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentView('categories');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center gap-2 text-xs uppercase tracking-wider font-medium text-[#111111] hover:underline self-start sm:self-end shrink-0 cursor-pointer"
+                >
+                  <span>View All Categories</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {defaultCategories.map((category) => (
+                  <button
+                    key={category.slug}
+                    type="button"
+                    onClick={() => handleCategorySelect(category.slug)}
+                    className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#ece8e1] shadow-[0_6px_24px_-6px_rgba(0,0,0,0.08)] flex items-end p-5 sm:p-6 transition-all duration-300 hover:shadow-[0_14px_32px_-8px_rgba(0,0,0,0.16)] text-left cursor-pointer"
+                  >
+                    <img
+                      src={
+                        category.imageUrl ||
+                        'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80'
+                      }
+                      alt={category.name}
+                      className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/15 group-hover:from-black/80 transition-colors" />
+                    <div className="relative z-10 w-full flex items-end justify-between gap-2">
+                      <h3 className="font-serif text-lg sm:text-xl font-normal text-white leading-snug">
+                        {category.name}
+                      </h3>
+                      <ArrowRight className="w-4 h-4 text-white/80 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Category Stacked Sections */}
+            <div id="products-section" className="py-20 sm:py-28 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full space-y-24 sm:space-y-32">
               {defaultCategories.map((category) => {
                 const catProducts = products.filter((p) => {
                   const pCat = (p.category || '').toLowerCase().trim();
@@ -410,15 +558,12 @@ export default function App() {
                 if (catProducts.length === 0) return null;
 
                 return (
-                  <section
-                    key={category.slug}
-                    className="pb-16 sm:pb-24 border-b border-[#e5e5e5] mb-16 sm:mb-24 last:border-b-0 last:pb-0 last:mb-0"
-                  >
+                  <section key={category.slug}>
                     {/* Category Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-10 sm:mb-14">
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold">
+                        <div className="flex items-center gap-2.5 mb-2.5">
+                          <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-semibold">
                             Atmosphere Curation
                           </span>
                           <span className="text-[#a3a3a3]">&middot;</span>
@@ -428,12 +573,12 @@ export default function App() {
                         </div>
 
                         {/* Large Category Heading */}
-                        <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1a1a1a] font-normal tracking-tight">
+                        <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#111111] font-normal tracking-tight">
                           {category.name}
                         </h2>
 
                         {category.description && (
-                          <p className="mt-2 text-sm sm:text-base text-[#525252] font-light max-w-2xl leading-relaxed">
+                          <p className="mt-3 text-sm sm:text-base text-[#525252] font-light max-w-2xl leading-relaxed">
                             {category.description}
                           </p>
                         )}
@@ -442,7 +587,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleCategorySelect(category.slug)}
-                        className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-medium text-[#1a1a1a] hover:underline self-start sm:self-end shrink-0 cursor-pointer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-[#e5e5e5] text-xs uppercase tracking-wider font-medium text-[#111111] hover:bg-[#111111] hover:text-white hover:border-[#111111] transition-all self-start sm:self-end shrink-0 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.04)] cursor-pointer"
                       >
                         <span>Explore {category.name}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -450,7 +595,7 @@ export default function App() {
                     </div>
 
                     {/* Responsive Grid: grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
                       {catProducts.map((product) => (
                         <ProductCard
                           key={product.id}
@@ -465,6 +610,134 @@ export default function App() {
                   </section>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: CATEGORIES DIRECTORY (app/categories/page.tsx simulation) */}
+        {currentView === 'categories' && (
+          <div className="min-h-screen bg-[#faf9f6] text-[#111111] py-14 sm:py-20 lg:py-24">
+            <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+              <div className="mb-10">
+                <button
+                  type="button"
+                  onClick={handleBackToStorefront}
+                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#737373] hover:text-[#111111] transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Home</span>
+                </button>
+              </div>
+
+              <div className="max-w-3xl mb-14 sm:mb-16">
+                <span className="text-[11px] uppercase tracking-[0.25em] text-[#737373] font-semibold block mb-3">
+                  Aesthetic Piece &middot; Full Directory
+                </span>
+                <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-[#111111] leading-[1.12]">
+                  Browse Categories
+                </h1>
+                <p className="mt-4 text-base sm:text-lg text-[#525252] font-light leading-relaxed">
+                  Explore every curated atmosphere—from sculptural ceramics and warm ambient lighting to tactile European flax textiles.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {defaultCategories.map((category) => (
+                  <button
+                    key={category.slug}
+                    type="button"
+                    onClick={() => handleCategorySelect(category.slug)}
+                    className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#ece8e1] shadow-[0_6px_24px_-6px_rgba(0,0,0,0.08)] flex items-end p-5 sm:p-6 transition-all duration-300 hover:shadow-[0_14px_32px_-8px_rgba(0,0,0,0.16)] text-left cursor-pointer"
+                  >
+                    <img
+                      src={
+                        category.imageUrl ||
+                        'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80'
+                      }
+                      alt={category.name}
+                      className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/15 group-hover:from-black/80 transition-colors" />
+                    <div className="relative z-10 w-full">
+                      <div className="flex items-end justify-between gap-2">
+                        <h2 className="font-serif text-lg sm:text-xl font-normal text-white leading-snug">
+                          {category.name}
+                        </h2>
+                        <ArrowRight className="w-4 h-4 text-white/80 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
+                      {category.description && (
+                        <p className="mt-1.5 text-xs text-white/75 font-light line-clamp-2 hidden sm:block">
+                          {category.description}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: ABOUT PAGE (app/about/page.tsx simulation) */}
+        {currentView === 'about' && (
+          <div className="min-h-screen bg-[#faf9f6] text-[#111111] py-14 sm:py-20 lg:py-28">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-10">
+              <div className="mb-10">
+                <button
+                  type="button"
+                  onClick={handleBackToStorefront}
+                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#737373] hover:text-[#111111] transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Home</span>
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-[#e5e5e5] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-8 sm:p-14 space-y-8">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#faf9f6] border border-[#e5e5e5] mb-6">
+                    <Sparkles className="w-3.5 h-3.5 text-[#8c7b6c]" />
+                    <span className="text-[11px] uppercase tracking-[0.22em] text-[#525252] font-medium">
+                      Our Philosophy
+                    </span>
+                  </div>
+
+                  <h1 className="font-serif text-4xl sm:text-5xl font-normal tracking-tight text-[#111111] leading-[1.14]">
+                    Curated Living &amp; Intentional Style
+                  </h1>
+                </div>
+
+                <div className="space-y-5 text-base sm:text-lg text-[#525252] font-light leading-relaxed">
+                  <p>
+                    Aesthetic Piece is an editorial home decor guide dedicated to quiet warmth, sculptural forms, and thoughtful everyday objects that turn houses into restful sanctuaries.
+                  </p>
+                  <p>
+                    Every vase, ambient lamp, travertine vessel, and European linen textile featured in our collection is handpicked for tactile balance, timeless materials, and effortless styling across modern living spaces.
+                  </p>
+                </div>
+
+                <div className="pt-6 border-t border-[#e5e5e5] flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentView('categories');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#111111] hover:bg-black text-white text-xs uppercase tracking-[0.2em] font-medium transition-all shadow-sm cursor-pointer"
+                  >
+                    <span>Browse Categories</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBackToStorefront}
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white border border-[#e5e5e5] hover:border-[#111111] text-[#111111] text-xs uppercase tracking-[0.2em] font-medium transition-all cursor-pointer"
+                  >
+                    <span>Explore Collection</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -557,110 +830,65 @@ export default function App() {
                 </div>
 
                 {/* Product Showcase */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start pb-20 border-b border-[#e5e5e5]">
-                  {/* Left Column (Image): Properly sized, non-excessive container with clean frame */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start pb-24">
+                  {/* Left Column (Image): Medium-sized container with soft shadow & rounded corners */}
                   <div className="lg:col-span-5 flex justify-center lg:justify-start">
-                    <div className="w-full max-w-[420px]">
-                      <div className="relative aspect-square sm:aspect-[4/5] w-full bg-white border border-[#e5e5e5] p-6 sm:p-8 flex items-center justify-center shadow-xs">
+                    <div className="w-full max-w-[440px]">
+                      <div className="relative aspect-square w-full bg-white rounded-2xl p-8 sm:p-10 flex items-center justify-center shadow-[0_10px_35px_-10px_rgba(0,0,0,0.08)] overflow-hidden">
                         <img
                           src={currentProduct.imageUrl}
                           alt={currentProduct.name}
-                          className="w-full h-full object-contain object-center transition-transform duration-500 ease-out hover:scale-103"
+                          className="w-full h-full max-h-[360px] object-contain object-center transition-transform duration-500 ease-out hover:scale-104"
                         />
                         {currentProduct.featured && (
-                          <div className="absolute top-4 left-4 bg-[#1a1a1a] text-white text-[10px] tracking-[0.2em] uppercase font-semibold px-2.5 py-1 z-10 shadow-xs">
+                          <div className="absolute top-5 left-5 bg-[#111111] text-white text-[10px] tracking-[0.2em] uppercase font-semibold px-3 py-1 rounded-full z-10 shadow-xs">
                             Featured Pick
                           </div>
                         )}
                       </div>
-                      <div className="mt-4 flex items-center justify-between text-[11px] text-[#737373] px-1 font-light">
-                        <span className="flex items-center gap-1">
-                          <ShieldCheck className="w-3.5 h-3.5 text-[#8c7b6c]" />
-                          <span>Verified Authenticity</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Sparkles className="w-3.5 h-3.5 text-[#8c7b6c]" />
-                          <span>Curator Inspected</span>
-                        </span>
-                      </div>
                     </div>
                   </div>
 
-                  {/* Right Column (Information): Clear, spacious, modern presentation */}
-                  <div className="lg:col-span-7 flex flex-col space-y-6 sm:space-y-7">
+                  {/* Right Column (Information): Spacious typography & full-width charcoal Shop Now CTA */}
+                  <div className="lg:col-span-7 flex flex-col space-y-8">
                     <div>
-                      {/* Clickable Product Category */}
                       <button
                         type="button"
                         onClick={() => handleCategorySelect(categorySlug)}
-                        className="inline-block text-xs uppercase tracking-[0.22em] text-[#737373] hover:text-[#1a1a1a] font-medium transition-colors cursor-pointer text-left"
+                        className="inline-block text-[11px] uppercase tracking-[0.25em] text-[#737373] hover:text-[#111111] font-semibold transition-colors cursor-pointer text-left"
                       >
                         {currentProduct.category}
                       </button>
 
-                      {/* Clear, Attractive Product Title */}
-                      <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#1a1a1a] mt-2 leading-[1.15] tracking-tight">
+                      <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] mt-3 leading-[1.14] tracking-tight">
                         {currentProduct.name}
                       </h1>
-                    </div>
 
-                    {/* Product Rating and Reviews */}
-                    <div className="flex items-center gap-3 text-xs">
-                      <div className="flex items-center text-[#1a1a1a]">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-[#1a1a1a] text-[#1a1a1a]" />
-                        ))}
+                      <div className="mt-5 pb-7 border-b border-[#e5e5e5]">
+                        <span className="font-serif text-3xl sm:text-4xl font-semibold text-[#111111] tracking-tight">
+                          ${currentProduct.price !== undefined && currentProduct.price !== null && currentProduct.price > 0
+                            ? Number(currentProduct.price).toFixed(2)
+                            : '0.00'}
+                        </span>
                       </div>
-                      <span className="font-medium text-[#1a1a1a]">4.9</span>
-                      <span className="text-[#a3a3a3]">&middot;</span>
-                      <span className="text-[#525252] font-light">48 Verified Curator Reviews</span>
-                      <span className="hidden sm:inline-block text-[#a3a3a3]">&middot;</span>
-                      <span className="hidden sm:inline-block text-[#245924] font-medium bg-[#f0f6f0] px-2 py-0.5 border border-[#d6ebd6]">
-                        In Stock at Retailer
-                      </span>
                     </div>
 
-                    {/* Prominent Product Price */}
-                    <div className="pt-2 pb-5 border-y border-[#e5e5e5] flex flex-wrap items-baseline gap-3">
-                      <span className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#1a1a1a] tracking-tight">
-                        ${currentProduct.price !== undefined && currentProduct.price !== null && currentProduct.price > 0
-                          ? Number(currentProduct.price).toFixed(2)
-                          : '0.00'}
-                      </span>
-                      <span className="text-xs uppercase tracking-wider text-[#737373] font-light">
-                        Verified Retail Guide Price
-                      </span>
-                    </div>
-
-                    {/* Detailed Product Description with breathing room */}
-                    <div className="space-y-4">
-                      <span className="text-[11px] uppercase tracking-[0.22em] font-semibold text-[#1a1a1a] block">
-                        Curator&apos;s Design Story &amp; Details
+                    <div className="space-y-3">
+                      <span className="text-xs uppercase tracking-[0.22em] font-semibold text-[#111111] block">
+                        Description
                       </span>
                       <p className="text-base sm:text-lg text-[#525252] leading-relaxed font-light">
                         {currentProduct.description}
                       </p>
                     </div>
 
-                    {/* Quality & Atmospheric Attributes */}
-                    <div className="space-y-2.5 py-4 border-t border-[#f0ede6] text-xs text-[#525252]">
-                      <div className="flex items-center gap-2.5">
-                        <Check className="w-4 h-4 text-[#8c7b6c] shrink-0" />
-                        <span>Selected for organic warmth, textural balance, and minimalist sanctuaries</span>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Check className="w-4 h-4 text-[#8c7b6c] shrink-0" />
-                        <span>Direct retailer checkout via verified partner affiliate referral</span>
-                      </div>
-                    </div>
-
-                    {/* Call to Action: Large, attractive, clearly visible "Shop Now" button */}
-                    <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    {/* Full-Width Charcoal Shop Now CTA + Wishlist secondary action */}
+                    <div className="pt-4 space-y-3">
                       <a
                         href={currentProduct.affiliateLink || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-3 px-10 py-4.5 bg-[#1a1a1a] hover:bg-black text-white text-xs sm:text-sm uppercase tracking-widest font-medium transition-all shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer"
+                        className="w-full inline-flex items-center justify-center gap-3 px-10 py-4.5 rounded-full bg-[#111111] hover:bg-black text-white text-xs sm:text-sm uppercase tracking-widest font-medium transition-all duration-300 shadow-[0_8px_24px_-6px_rgba(17,17,17,0.35)] hover:shadow-[0_12px_30px_-6px_rgba(17,17,17,0.5)] active:scale-[0.99] cursor-pointer"
                       >
                         <span>Shop Now</span>
                         <ExternalLink className="w-4 h-4 stroke-[2]" />
@@ -668,7 +896,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleToggleWishlist(currentProduct.id)}
-                        className="px-6 py-4 text-xs uppercase tracking-wider font-medium text-[#1a1a1a] border border-[#1a1a1a] hover:bg-[#1a1a1a]/5 transition-colors cursor-pointer text-center"
+                        className="w-full py-3.5 rounded-full text-xs uppercase tracking-wider font-medium text-[#111111] border border-[#e5e5e5] bg-white hover:border-[#111111] transition-colors cursor-pointer text-center"
                       >
                         {wishlist.includes(currentProduct.id) ? 'Saved in Wishlist ✓' : 'Save to Wishlist ♡'}
                       </button>
@@ -714,8 +942,131 @@ export default function App() {
           );
         })()}
 
-        {/* VIEW 3: ADMIN DASHBOARD (app/admin/page.tsx simulation) */}
-        {currentView === 'admin' && (
+        {/* VIEW 3: ADMIN LOGIN (/admin/login) & ADD PRODUCT (/admin/add-product) */}
+        {(currentView === 'admin-login' || ((currentView === 'admin-add-product' || currentView === 'admin') && !isAdminLoggedIn)) && (
+          <div className="min-h-[calc(100vh-140px)] bg-[#faf9f6] flex items-center justify-center px-6 py-16">
+            <div className="w-full max-w-md">
+              <button
+                type="button"
+                onClick={handleBackToStorefront}
+                className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-[#737373] hover:text-[#111111] transition-colors mb-8 cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Storefront</span>
+              </button>
+
+              <div className="bg-white rounded-2xl border border-[#e5e5e5] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.08)] p-8 sm:p-10">
+                <div className="flex flex-col items-center text-center mb-8">
+                  <div className="w-11 h-11 rounded-full bg-[#faf9f6] border border-[#e5e5e5] flex items-center justify-center mb-4">
+                    <Lock className="w-4 h-4 text-[#111111]" />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-[#737373] font-semibold">
+                    Aesthetic Piece &middot; /admin/login
+                  </span>
+                  <h1 className="font-serif text-3xl text-[#111111] font-normal mt-1.5 tracking-tight">
+                    Admin Sign In
+                  </h1>
+                  <p className="text-xs text-[#737373] font-light mt-2 leading-relaxed">
+                    Sign in with your authorized administrator email and password to access Add Product.
+                  </p>
+                </div>
+
+                {adminLoginError && (
+                  <div className="mb-6 p-3.5 rounded-xl bg-[#fef2f2] border border-[#fecaca] text-xs text-[#991b1b] text-center">
+                    {adminLoginError}
+                  </div>
+                )}
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setAdminLoginError('');
+                    const trimmedEmail = adminLoginEmail.trim().toLowerCase();
+
+                    if (!trimmedEmail || !adminLoginPassword) {
+                      setAdminLoginError('Please enter both your email and password.');
+                      return;
+                    }
+
+                    const expectedEmail = (registeredAdmin?.email || 'admin@aestheticpiece.com').toLowerCase();
+                    const expectedPassword = registeredAdmin?.password || 'change-this-secure-password';
+
+                    if (trimmedEmail !== expectedEmail || adminLoginPassword !== expectedPassword) {
+                      setAdminLoginError('Invalid email or password. Access denied.');
+                      return;
+                    }
+
+                    localStorage.setItem('isAdminAuthenticated', 'true');
+                    setIsAdminLoggedIn(true);
+                    setAdminLoginPassword('');
+                    setCurrentView('admin-add-product');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="space-y-5"
+                >
+                  <div>
+                    <label
+                      htmlFor="preview-admin-email"
+                      className="block text-[11px] uppercase tracking-[0.2em] text-[#525252] font-semibold mb-2"
+                    >
+                      Email
+                    </label>
+                    <input
+                      id="preview-admin-email"
+                      type="email"
+                      required
+                      value={adminLoginEmail}
+                      onChange={(e) => setAdminLoginEmail(e.target.value)}
+                      placeholder="admin@aestheticpiece.com"
+                      className="w-full px-4 py-3 text-sm bg-[#faf9f6] border border-[#e5e5e5] rounded-xl text-[#111111] placeholder-[#a3a3a3] focus:outline-none focus:border-[#111111] focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="preview-admin-password"
+                      className="block text-[11px] uppercase tracking-[0.2em] text-[#525252] font-semibold mb-2"
+                    >
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="preview-admin-password"
+                        type={showAdminPassword ? 'text' : 'password'}
+                        required
+                        value={adminLoginPassword}
+                        onChange={(e) => setAdminLoginPassword(e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full px-4 py-3 pr-11 text-sm bg-[#faf9f6] border border-[#e5e5e5] rounded-xl text-[#111111] placeholder-[#a3a3a3] focus:outline-none focus:border-[#111111] focus:bg-white transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAdminPassword((prev) => !prev)}
+                        aria-label={showAdminPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#737373] hover:text-[#111111] transition-colors cursor-pointer"
+                      >
+                        {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 px-6 rounded-full bg-[#111111] hover:bg-black text-white text-xs uppercase tracking-[0.2em] font-medium transition-all shadow-sm active:scale-[0.99] cursor-pointer mt-2"
+                  >
+                    Login
+                  </button>
+                </form>
+
+                <div className="mt-6 pt-5 border-t border-[#f0ede6] text-center text-[11px] text-[#737373] font-light">
+                  Redirects directly to <span className="font-mono text-[#111111]">/admin/add-product</span> upon sign-in.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(currentView === 'admin-add-product' || currentView === 'admin') && isAdminLoggedIn && (
           <div className="py-12 sm:py-16 min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {/* Navigation & Header */}
@@ -725,30 +1076,56 @@ export default function App() {
                     <button
                       type="button"
                       onClick={handleBackToStorefront}
-                      className="hover:text-[#1a1a1a] transition-colors flex items-center gap-1.5 cursor-pointer"
+                      className="hover:text-[#111111] transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>Back to Storefront</span>
                     </button>
                     <span>/</span>
-                    <span className="text-[#1a1a1a] font-medium">Administration</span>
+                    <span className="text-[#111111] font-medium">
+                      {currentView === 'admin-add-product' ? 'Add Product' : 'Administration'}
+                    </span>
                   </div>
-                  <h1 className="font-serif text-3xl sm:text-4xl text-[#1a1a1a] font-normal flex items-center gap-3">
-                    <span>Admin & Product Management</span>
-                    <span className="text-xs font-sans tracking-widest uppercase bg-[#1a1a1a] text-white px-2.5 py-1">
-                      SQLite &middot; Prisma
+                  <h1 className="font-serif text-3xl sm:text-4xl text-[#111111] font-normal flex flex-wrap items-center gap-3">
+                    <span>{currentView === 'admin-add-product' ? 'Add New Product' : 'Admin & Product Management'}</span>
+                    <span className="text-xs font-sans tracking-widest uppercase bg-[#111111] text-white px-2.5 py-1 rounded-full">
+                      {currentView === 'admin-add-product' ? '/admin/add-product' : 'SQLite · Prisma'}
                     </span>
                   </h1>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentView(currentView === 'admin-add-product' ? 'admin' : 'admin-add-product')
+                    }
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs uppercase tracking-wider text-[#111111] bg-white border border-[#e5e5e5] rounded-full hover:bg-[#f5f3ef] transition-colors cursor-pointer"
+                  >
+                    <span>
+                      {currentView === 'admin-add-product' ? 'Admin Dashboard' : '+ Add Product'}
+                    </span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setCurrentView('code')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs uppercase tracking-wider text-[#1a1a1a] bg-white border border-[#e5e5e5] hover:bg-[#f5f3ef] transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs uppercase tracking-wider text-[#111111] bg-white border border-[#e5e5e5] rounded-full hover:bg-[#f5f3ef] transition-colors cursor-pointer"
                   >
                     <FileCode className="w-3.5 h-3.5 text-[#737373]" />
                     <span>View Next.js Files</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem('isAdminAuthenticated');
+                      setIsAdminLoggedIn(false);
+                      setAdminLoginPassword('');
+                      setCurrentView('admin-login');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs uppercase tracking-wider text-white bg-[#111111] hover:bg-black rounded-full transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Logout</span>
                   </button>
                 </div>
               </div>
@@ -941,6 +1318,58 @@ export default function App() {
                 <p className="mt-5 text-sm text-[#a3a3a3] font-light leading-relaxed max-w-sm">
                   A design curation dedicated to organic warmth, sculptural ceramics, calming water features, and timeless everyday essentials for spaces of quiet mindfulness.
                 </p>
+
+                {/* Contact Info */}
+                <div className="mt-6 space-y-2.5 text-sm text-[#d4d4d4] font-light">
+                  <a
+                    href="mailto:modernstyle2026@gmail.com"
+                    className="flex items-center gap-2.5 hover:text-white transition-colors w-fit"
+                  >
+                    <Mail className="w-4 h-4 text-[#c2b29d] shrink-0" />
+                    <span>modernstyle2026@gmail.com</span>
+                  </a>
+                  <a
+                    href="tel:03390002230"
+                    className="flex items-center gap-2.5 hover:text-white transition-colors w-fit"
+                  >
+                    <Phone className="w-4 h-4 text-[#c2b29d] shrink-0" />
+                    <span>03390002230</span>
+                  </a>
+                </div>
+
+                {/* Social Media Links */}
+                <div className="mt-6 flex items-center gap-3">
+                  <a
+                    href="https://instagram.com/aestheticpiece"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Instagram"
+                    title="Instagram"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#242424] border border-[#3a3a3a] text-[#d4d4d4] hover:bg-[#faf9f6] hover:text-[#111111] hover:border-[#faf9f6] transition-all"
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                  <a
+                    href="https://facebook.com/aestheticpiece"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Facebook"
+                    title="Facebook"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#242424] border border-[#3a3a3a] text-[#d4d4d4] hover:bg-[#faf9f6] hover:text-[#111111] hover:border-[#faf9f6] transition-all"
+                  >
+                    <Facebook className="w-4 h-4" />
+                  </a>
+                  <a
+                    href="https://tiktok.com/@aestheticpiece"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="TikTok"
+                    title="TikTok"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#242424] border border-[#3a3a3a] text-[#d4d4d4] hover:bg-[#faf9f6] hover:text-[#111111] hover:border-[#faf9f6] transition-all"
+                  >
+                    <Music2 className="w-4 h-4" />
+                  </a>
+                </div>
               </div>
 
               <div className="mt-8 flex items-center gap-2 text-xs text-[#737373]">
@@ -999,7 +1428,15 @@ export default function App() {
             <div className="flex items-center gap-6">
               <button
                 type="button"
-                onClick={() => setCurrentView('admin')}
+                onClick={() => {
+                  setAdminLoginError('');
+                  const isAuth =
+                    typeof window !== 'undefined' &&
+                    localStorage.getItem('isAdminAuthenticated') === 'true';
+                  setIsAdminLoggedIn(isAuth);
+                  setCurrentView(isAuth ? 'admin-add-product' : 'admin-login');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="text-[#a3a3a3] hover:text-white transition-colors cursor-pointer"
               >
                 Admin & Manage
@@ -1257,6 +1694,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Floating WhatsApp Button */}
+      <FloatingWhatsApp />
     </div>
   );
 }

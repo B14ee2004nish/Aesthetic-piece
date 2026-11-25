@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import FloatingWhatsApp from '@/components/FloatingWhatsApp';
 
 export const metadata: Metadata = {
   title: 'Aesthetic Piece - Curated Living & Style',
@@ -30,10 +31,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#fcfbf9] text-[#1a1a1a] min-h-screen flex flex-col antialiased selection:bg-[#1a1a1a] selection:text-white">
+      <body className="bg-[#faf9f6] text-[#111111] min-h-screen flex flex-col antialiased selection:bg-[#111111] selection:text-white">
         <Header />
         <main className="flex-grow">{children}</main>
         <Footer />
+        <FloatingWhatsApp />
       </body>
     </html>
   );

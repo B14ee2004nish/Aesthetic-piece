@@ -42,7 +42,7 @@ export default function ProductCard({
   };
 
   return (
-    <article className="group relative flex flex-col bg-white border border-[#e5e5e5] hover:border-[#1a1a1a] transition-all duration-300">
+    <article className="group relative flex flex-col bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_14px_30px_-8px_rgba(0,0,0,0.1)] transition-all duration-300">
       {/* Clickable Image Container */}
       <Link
         href={`/product/${product.id}`}
@@ -57,11 +57,11 @@ export default function ProductCard({
         />
 
         {/* Subtle hover gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {/* Featured Tag */}
         {product.featured && (
-          <div className="absolute top-3 left-3 bg-[#1a1a1a] text-white text-[10px] tracking-[0.18em] uppercase font-semibold px-2.5 py-1 z-10">
+          <div className="absolute top-3.5 left-3.5 bg-[#111111]/90 backdrop-blur-xs text-white text-[10px] tracking-[0.18em] uppercase font-medium px-3 py-1 rounded-full z-10">
             Featured Pick
           </div>
         )}
@@ -75,7 +75,7 @@ export default function ProductCard({
               e.stopPropagation();
               onQuickView(product);
             }}
-            className="absolute bottom-3 left-3 right-3 py-2.5 bg-white/95 backdrop-blur-sm text-[#1a1a1a] text-xs font-medium tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#1a1a1a] hover:text-white text-center cursor-pointer shadow-sm z-10"
+            className="absolute bottom-3.5 left-3.5 right-3.5 py-2.5 rounded-full bg-white/95 backdrop-blur-sm text-[#111111] text-xs font-medium tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#111111] hover:text-white text-center cursor-pointer shadow-sm z-10"
           >
             Quick View
           </button>
@@ -91,63 +91,66 @@ export default function ProductCard({
           onToggleWishlist?.(product.id);
         }}
         aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-        className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all cursor-pointer z-20 ${
+        className={`absolute top-3.5 right-3.5 p-2 rounded-full backdrop-blur-md transition-all cursor-pointer z-20 ${
           isWishlisted
-            ? 'bg-[#1a1a1a] text-white'
-            : 'bg-white/85 text-[#1a1a1a] hover:bg-white hover:text-red-600'
+            ? 'bg-[#111111] text-white'
+            : 'bg-white/85 text-[#111111] hover:bg-white hover:text-red-600'
         }`}
       >
         <Heart
-          className={`w-4 h-4 ${isWishlisted ? 'fill-white stroke-white' : 'stroke-[1.75]'}`}
+          className={`w-4 h-4 ${isWishlisted ? 'fill-white stroke-white' : 'stroke-[1.6]'}`}
         />
       </button>
 
       {/* Product Content Details */}
-      <div className="p-5 flex flex-col flex-grow justify-between bg-white">
+      <div className="p-6 flex flex-col flex-grow justify-between bg-white">
         <div>
           {/* Category Label */}
-          <span className="text-[11px] uppercase tracking-[0.2em] font-medium text-[#737373]">
+          <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#737373]">
             {product.category}
           </span>
 
-          {/* Clickable Product Title */}
-          <Link
-            href={`/product/${product.id}`}
-            onClick={handleCardClick}
-            className="block font-serif text-lg font-medium text-[#1a1a1a] mt-1 group-hover:text-black line-clamp-1 hover:underline decoration-1 underline-offset-2"
-          >
-            {product.name}
-          </Link>
+          {/* Aligned Title & Price */}
+          <div className="mt-1.5 flex items-baseline justify-between gap-3">
+            <Link
+              href={`/product/${product.id}`}
+              onClick={handleCardClick}
+              className="font-serif text-lg font-medium text-[#111111] group-hover:text-black line-clamp-1 hover:underline decoration-1 underline-offset-4"
+            >
+              {product.name}
+            </Link>
+            {product.price !== undefined && product.price !== null && product.price > 0 && (
+              <span className="font-serif text-base font-medium text-[#111111] shrink-0">
+                ${Number(product.price).toFixed(2)}
+              </span>
+            )}
+          </div>
 
           {/* Description Preview */}
-          <p className="mt-2 text-xs text-[#525252] leading-relaxed line-clamp-2 font-light">
+          <p className="mt-2.5 text-xs text-[#525252] leading-relaxed line-clamp-2 font-light">
             {product.description}
           </p>
         </div>
 
-        {/* Footer info: Price & Affiliate Link CTA */}
-        <div className="mt-5 pt-4 border-t border-[#f0ede6] flex items-center justify-between gap-3">
-          {product.price !== undefined && product.price !== null && product.price > 0 ? (
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider text-[#a3a3a3]">Guide Price</span>
-              <span className="font-serif text-base font-medium text-[#1a1a1a]">
-                ${Number(product.price).toFixed(2)}
-              </span>
-            </div>
-          ) : (
-            <div className="text-xs text-[#737373] italic">Curated Piece</div>
-          )}
+        {/* Footer CTA */}
+        <div className="mt-5 pt-4 border-t border-[#f2efe9] flex items-center justify-between gap-3">
+          <Link
+            href={`/product/${product.id}`}
+            onClick={handleCardClick}
+            className="text-xs text-[#737373] hover:text-[#111111] transition-colors font-medium"
+          >
+            View Details
+          </Link>
 
-          {/* Affiliate Outbound Link */}
           <a
             href={product.affiliateLink || '#'}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium tracking-wide text-white bg-[#1a1a1a] hover:bg-black active:scale-[0.98] transition-all rounded-none cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium tracking-wide text-white bg-[#111111] hover:bg-black rounded-full active:scale-[0.98] transition-all cursor-pointer"
           >
             <span>Shop Now</span>
-            <ExternalLink className="w-3.5 h-3.5 stroke-[1.75]" />
+            <ExternalLink className="w-3 h-3 stroke-[1.75]" />
           </a>
         </div>
       </div>

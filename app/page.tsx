@@ -277,23 +277,75 @@ export default async function HomePage() {
   const displayGroups = activeGroups.length > 0 ? activeGroups : categoryGroups;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fcfbf9]">
+    <div className="flex flex-col min-h-screen bg-[#faf9f6] text-[#111111]">
       {/* Hero Section */}
       <Hero />
 
-      {/* Stacked Categories & Products Section (Requirement 1) */}
-      <div id="products-section" className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      {/* Browse Categories Section */}
+      <section id="categories-section" className="pt-20 sm:pt-28 pb-4 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 sm:mb-12">
+          <div>
+            <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-semibold block mb-2">
+              Curated Atmospheres
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#111111] font-normal tracking-tight">
+              Browse Categories
+            </h2>
+          </div>
+
+          <Link
+            href="/categories"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-wider font-medium text-[#111111] hover:underline self-start sm:self-end shrink-0"
+          >
+            <span>View All Categories</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {categories.map((category) => (
+            <Link
+              key={category.slug || category.id}
+              href={`/category/${category.slug}`}
+              className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#ece8e1] shadow-[0_6px_24px_-6px_rgba(0,0,0,0.08)] flex items-end p-5 sm:p-6 transition-all duration-300 hover:shadow-[0_14px_32px_-8px_rgba(0,0,0,0.16)]"
+            >
+              {/* Hint Background Image */}
+              <img
+                src={
+                  category.imageUrl ||
+                  'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80'
+                }
+                alt={category.name}
+                className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                loading="lazy"
+              />
+              {/* Soft Gradient Overlay for Legibility */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/15 group-hover:from-black/80 transition-colors" />
+
+              {/* Category Name */}
+              <div className="relative z-10 w-full flex items-end justify-between gap-2">
+                <h3 className="font-serif text-lg sm:text-xl font-normal text-white leading-snug">
+                  {category.name}
+                </h3>
+                <ArrowRight className="w-4 h-4 text-white/80 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Stacked Categories & Products Section */}
+      <div id="products-section" className="py-20 sm:py-28 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full space-y-24 sm:space-y-32">
         {displayGroups.map(({ category, products: catProducts }, index) => {
           return (
             <section
               key={category.slug || category.id || index}
-              className="pb-16 sm:pb-24 border-b border-[#e5e5e5] mb-16 sm:mb-24 last:border-b-0 last:pb-0 last:mb-0"
             >
               {/* Category Header */}
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-10 sm:mb-14">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold">
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-semibold">
                       Atmosphere Curation
                     </span>
                     <span className="text-[#a3a3a3]">&middot;</span>
@@ -302,13 +354,13 @@ export default async function HomePage() {
                     </span>
                   </div>
 
-                  {/* Large Category Heading as requested */}
-                  <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1a1a1a] font-normal tracking-tight">
+                  {/* Large Category Heading */}
+                  <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#111111] font-normal tracking-tight">
                     {category.name}
                   </h2>
 
                   {category.description && (
-                    <p className="mt-2 text-sm sm:text-base text-[#525252] font-light max-w-2xl leading-relaxed">
+                    <p className="mt-3 text-sm sm:text-base text-[#525252] font-light max-w-2xl leading-relaxed">
                       {category.description}
                     </p>
                   )}
@@ -317,7 +369,7 @@ export default async function HomePage() {
                 {/* View Category Link */}
                 <Link
                   href={`/category/${category.slug}`}
-                  className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-medium text-[#1a1a1a] hover:underline self-start sm:self-end shrink-0"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-[#e5e5e5] text-xs uppercase tracking-wider font-medium text-[#111111] hover:bg-[#111111] hover:text-white hover:border-[#111111] transition-all self-start sm:self-end shrink-0 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.04)]"
                 >
                   <span>Explore {category.name}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -326,17 +378,17 @@ export default async function HomePage() {
 
               {/* Responsive Product Grid: grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 */}
               {catProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
                   {catProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
               ) : (
-                <div className="py-12 text-center bg-white border border-dashed border-[#e5e5e5] p-6">
-                  <p className="font-serif text-base text-[#1a1a1a]">No pieces cataloged in {category.name} yet.</p>
+                <div className="py-14 text-center bg-white rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] p-8">
+                  <p className="font-serif text-base text-[#111111]">No pieces cataloged in {category.name} yet.</p>
                   <Link
                     href="/admin"
-                    className="inline-block mt-3 text-xs uppercase tracking-wider text-[#1a1a1a] underline"
+                    className="inline-block mt-3 text-xs uppercase tracking-wider text-[#111111] underline"
                   >
                     Add Products in Admin &rarr;
                   </Link>
@@ -350,30 +402,27 @@ export default async function HomePage() {
         {Array.from(remainingCategoriesMap.entries()).map(([catName, unassignedProducts]) => {
           const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
           return (
-            <section
-              key={catName}
-              className="pb-16 sm:pb-24 border-b border-[#e5e5e5] mb-16 sm:mb-24 last:border-b-0 last:pb-0 last:mb-0"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12">
+            <section key={catName}>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-10 sm:mb-14">
                 <div>
-                  <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold block mb-1">
+                  <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-semibold block mb-2">
                     Atmosphere Curation
                   </span>
-                  <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1a1a1a] font-normal tracking-tight">
+                  <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#111111] font-normal tracking-tight">
                     {catName}
                   </h2>
                 </div>
 
                 <Link
                   href={`/category/${slug}`}
-                  className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider font-medium text-[#1a1a1a] hover:underline self-start sm:self-end shrink-0"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-[#e5e5e5] text-xs uppercase tracking-wider font-medium text-[#111111] hover:bg-[#111111] hover:text-white hover:border-[#111111] transition-all self-start sm:self-end shrink-0 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.04)]"
                 >
                   <span>Explore {catName}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
                 {unassignedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

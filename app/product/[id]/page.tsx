@@ -269,38 +269,38 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const categorySlug = product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   return (
-    <div className="py-10 sm:py-16 lg:py-24 min-h-screen bg-[#fcfbf9]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-12 sm:py-20 lg:py-24 min-h-screen bg-[#faf9f6] text-[#111111]">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#737373] mb-8 sm:mb-14">
-          <Link href="/" className="hover:text-[#1a1a1a] transition-colors flex items-center gap-1.5">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2.5 text-xs uppercase tracking-wider text-[#737373] mb-10 sm:mb-16">
+          <Link href="/" className="hover:text-[#111111] transition-colors flex items-center gap-1.5">
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Storefront</span>
           </Link>
           <span>/</span>
-          <Link href={`/category/${categorySlug}`} className="hover:text-[#1a1a1a] transition-colors font-medium">
+          <Link href={`/category/${categorySlug}`} className="hover:text-[#111111] transition-colors font-medium">
             {product.category}
           </Link>
           <span>/</span>
-          <span className="text-[#1a1a1a] font-medium truncate max-w-[200px] sm:max-w-md">
+          <span className="text-[#111111] font-medium truncate max-w-[200px] sm:max-w-md">
             {product.name}
           </span>
         </nav>
 
-        {/* Spacious, Beautiful Two-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-20 items-start pb-20 border-b border-[#e5e5e5]">
-          {/* Left Column (Image): Neat, properly sized container with subtle styling */}
+        {/* Spacious, Clean Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start pb-24">
+          {/* Left Column (Image): Medium-sized container with soft shadow & rounded corners */}
           <div className="lg:col-span-5 flex justify-center lg:justify-start">
             <div className="w-full max-w-[440px]">
-              <div className="relative aspect-square w-full bg-white border border-[#e5e5e5] p-6 sm:p-10 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] flex items-center justify-center">
+              <div className="relative aspect-square w-full bg-white rounded-2xl p-8 sm:p-10 shadow-[0_10px_35px_-10px_rgba(0,0,0,0.08)] flex items-center justify-center overflow-hidden">
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-full h-full max-h-[360px] object-contain object-center transition-transform duration-500 ease-out hover:scale-103"
+                  className="w-full h-full max-h-[360px] object-contain object-center transition-transform duration-500 ease-out hover:scale-104"
                 />
 
                 {product.featured && (
-                  <div className="absolute top-4 left-4 bg-[#1a1a1a] text-white text-[10px] tracking-[0.2em] uppercase font-semibold px-2.5 py-1 shadow-xs">
+                  <div className="absolute top-5 left-5 bg-[#111111] text-white text-[10px] tracking-[0.2em] uppercase font-semibold px-3 py-1 rounded-full shadow-xs">
                     Featured Pick
                   </div>
                 )}
@@ -308,25 +308,25 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             </div>
           </div>
 
-          {/* Right Column (Information): Clean, uncluttered, and spacious typography */}
-          <div className="lg:col-span-7 flex flex-col space-y-7">
+          {/* Right Column (Information): Spacious typography & full-width charcoal Shop Now button */}
+          <div className="lg:col-span-7 flex flex-col space-y-8">
             <div>
-              {/* Category */}
+              {/* Subtle Uppercase Category */}
               <Link
                 href={`/category/${categorySlug}`}
-                className="inline-block text-[11px] uppercase tracking-[0.25em] text-[#737373] hover:text-[#1a1a1a] font-medium transition-colors"
+                className="inline-block text-[11px] uppercase tracking-[0.25em] text-[#737373] hover:text-[#111111] font-semibold transition-colors"
               >
                 {product.category}
               </Link>
 
-              {/* Title */}
-              <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#1a1a1a] mt-2.5 tracking-tight leading-[1.15]">
+              {/* Elegant Title */}
+              <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] mt-3 tracking-tight leading-[1.14]">
                 {product.name}
               </h1>
 
-              {/* Price */}
-              <div className="mt-4 pb-6 border-b border-[#e5e5e5]">
-                <span className="font-serif text-3xl sm:text-4xl font-normal text-[#1a1a1a] tracking-tight">
+              {/* Large Bold Price */}
+              <div className="mt-5 pb-7 border-b border-[#e5e5e5]">
+                <span className="font-serif text-3xl sm:text-4xl font-semibold text-[#111111] tracking-tight">
                   ${product.price !== undefined && product.price !== null && product.price > 0
                     ? Number(product.price).toFixed(2)
                     : '0.00'}
@@ -334,9 +334,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Well-Spaced Description */}
             <div className="space-y-3">
-              <h2 className="text-xs uppercase tracking-[0.2em] font-semibold text-[#1a1a1a]">
+              <h2 className="text-xs uppercase tracking-[0.22em] font-semibold text-[#111111]">
                 Description
               </h2>
               <p className="text-base sm:text-lg text-[#525252] leading-relaxed font-light">
@@ -344,19 +344,19 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </p>
             </div>
 
-            {/* Call to Action: Large, clearly visible "Shop Now" button */}
-            <div className="pt-6 border-t border-[#e5e5e5]">
+            {/* Call to Action: Full-Width Dark Charcoal "Shop Now" Button */}
+            <div className="pt-4">
               <a
                 href={product.affiliateLink || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-12 py-4.5 bg-[#1a1a1a] hover:bg-black text-white text-xs sm:text-sm uppercase tracking-widest font-medium transition-all shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-3 px-10 py-4.5 rounded-full bg-[#111111] hover:bg-black text-white text-xs sm:text-sm uppercase tracking-widest font-medium transition-all duration-300 shadow-[0_8px_24px_-6px_rgba(17,17,17,0.35)] hover:shadow-[0_12px_30px_-6px_rgba(17,17,17,0.5)] active:scale-[0.99] cursor-pointer"
               >
                 <span>Shop Now</span>
                 <ExternalLink className="w-4 h-4 stroke-[2]" />
               </a>
 
-              <p className="mt-3 text-[11px] text-[#737373] font-light">
+              <p className="mt-3.5 text-center text-[11px] text-[#737373] font-light">
                 Opens directly in official partner retailer store in a new tab.
               </p>
             </div>
@@ -365,19 +365,19 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
         {/* Similar Products: "You May Also Like" */}
         {similarProducts.length > 0 && (
-          <section className="mt-20 sm:mt-28">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 pb-4 border-b border-[#e5e5e5]">
+          <section className="mt-16 sm:mt-24 pt-16 border-t border-[#e5e5e5]">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 sm:mb-12">
               <div>
-                <span className="text-[11px] uppercase tracking-[0.22em] text-[#737373] font-semibold">
+                <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-semibold">
                   Atmosphere Matching
                 </span>
-                <h2 className="font-serif text-2xl sm:text-3xl text-[#1a1a1a] font-normal mt-1">
+                <h2 className="font-serif text-2xl sm:text-3xl text-[#111111] font-normal mt-1.5">
                   You May Also Like
                 </h2>
               </div>
               <Link
                 href={`/category/${categorySlug}`}
-                className="mt-2 sm:mt-0 text-xs uppercase tracking-wider text-[#1a1a1a] hover:underline font-medium"
+                className="mt-3 sm:mt-0 text-xs uppercase tracking-wider text-[#111111] hover:underline font-medium"
               >
                 Browse all {product.category} &rarr;
               </Link>
