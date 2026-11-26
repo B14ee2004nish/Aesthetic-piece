@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ADMIN_COOKIE_NAME, signAdminSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,24 +37,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = await signAdminSession(adminEmail);
-
-    const response = NextResponse.json({
+    // No persistent cookie is set; authentication is strictly per-visit in memory.
+    return NextResponse.json({
       success: true,
       message: 'Authenticated successfully.',
       redirectTo: '/admin/add-product',
       user: { email: adminEmail },
     });
-
-    response.cookies.set(ADMIN_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-
-    return response;
   } catch {
     return NextResponse.json(
       { success: false, error: 'Unable to process login request.' },

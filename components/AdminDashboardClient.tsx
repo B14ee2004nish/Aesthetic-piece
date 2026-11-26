@@ -19,6 +19,10 @@ import AdminProductForm from '@/components/AdminProductForm';
 import { ProductType } from '@/components/ProductCard';
 import { CategoryItem } from '@/components/CategoryGrid';
 import { PREDEFINED_CATEGORIES } from '@/app/api/categories/route';
+import {
+  clearInMemoryAdminSession,
+  getInMemoryAdminSession,
+} from '@/lib/admin-memory-auth';
 
 const initialItems: ProductType[] = [
   {
@@ -119,15 +123,14 @@ export default function AdminDashboardClient({
   const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem('isAdminAuthenticated') !== 'true') {
+    if (!getInMemoryAdminSession().authenticated) {
       router.replace('/admin/login');
     }
   }, [router]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    localStorage.removeItem('isAdminAuthenticated');
-    localStorage.removeItem('adminEmail');
+    clearInMemoryAdminSession();
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } finally {
@@ -369,7 +372,11 @@ export default function AdminDashboardClient({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-8 border-b border-[#e5e5e5]">
           <div>
             <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#737373] mb-2">
-              <Link href="/" className="hover:text-[#111111] transition-colors flex items-center gap-1.5">
+              <Link
+                href="/"
+                onClick={() => clearInMemoryAdminSession()}
+                className="hover:text-[#111111] transition-colors flex items-center gap-1.5"
+              >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Storefront</span>
               </Link>
@@ -642,6 +649,7 @@ export default function AdminDashboardClient({
               </button>
               <Link
                 href="/"
+                onClick={() => clearInMemoryAdminSession()}
                 className="inline-flex items-center gap-2 text-xs uppercase tracking-wider font-medium text-[#525252] hover:text-[#111111] transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />

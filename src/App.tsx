@@ -26,7 +26,15 @@ import {
   Phone,
   Instagram,
   Facebook,
-  Music2
+  Music2,
+  Compass,
+  TrendingUp,
+  Gift,
+  ChevronDown,
+  Cake,
+  Lightbulb,
+  Palette,
+  Tag
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
@@ -35,6 +43,7 @@ import ProductGrid from '@/components/ProductGrid';
 import ProductCard, { ProductType } from '@/components/ProductCard';
 import AdminProductForm from '@/components/AdminProductForm';
 import FloatingWhatsApp from '@/components/FloatingWhatsApp';
+import SparkleCursor from '@/components/SparkleCursor';
 
 // Initial curated home decor items including Home Décor category and atmosphere picks
 const INITIAL_PRODUCTS: ProductType[] = [
@@ -211,7 +220,7 @@ const INITIAL_PRODUCTS: ProductType[] = [
 ];
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'categories' | 'about' | 'category' | 'admin-login' | 'admin-add-product' | 'admin' | 'code' | 'product'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'categories' | 'trending' | 'gift-ideas' | 'about' | 'category' | 'admin-login' | 'admin-add-product' | 'admin' | 'code' | 'product'>('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [selectedProductId, setSelectedProductId] = useState<string>('prod_1');
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('all');
@@ -219,6 +228,11 @@ export default function App() {
   const [wishlist, setWishlist] = useState<string[]>(['prod_1', 'prod_5']);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [homeSearchInput, setHomeSearchInput] = useState<string>('');
+  const [activeHomeSearch, setActiveHomeSearch] = useState<string>('');
+  const [trendingFilter, setTrendingFilter] = useState<'All Trending' | 'Vases' | 'Lighting' | 'Textiles'>('All Trending');
+  const [trendingSort, setTrendingSort] = useState<'popular' | 'newest'>('popular');
+  const [giftFilter, setGiftFilter] = useState<string>('All Gift Picks');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState<boolean>(false);
   const [quickViewProduct, setQuickViewProduct] = useState<ProductType | null>(null);
@@ -231,26 +245,30 @@ export default function App() {
       return null;
     }
   });
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return localStorage.getItem('isAdminAuthenticated') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
   const [adminLoginEmail, setAdminLoginEmail] = useState<string>('');
   const [adminLoginPassword, setAdminLoginPassword] = useState<string>('');
   const [showAdminPassword, setShowAdminPassword] = useState<boolean>(false);
   const [adminLoginError, setAdminLoginError] = useState<string>('');
 
+  // Ensure any leftover persistent storage is wiped on mount
   useEffect(() => {
-    if (currentView === 'admin' || currentView === 'admin-add-product') {
-      const isAuth = localStorage.getItem('isAdminAuthenticated') === 'true';
-      if (!isAuth) {
-        setIsAdminLoggedIn(false);
-        setCurrentView('admin-login');
-      }
+    try {
+      localStorage.removeItem('isAdminAuthenticated');
+      localStorage.removeItem('adminEmail');
+      localStorage.removeItem('ap_preview_admin_session');
+      sessionStorage.removeItem('isAdminAuthenticated');
+      sessionStorage.removeItem('adminEmail');
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  // Logout on navigate: leaving admin views immediately ends the session
+  useEffect(() => {
+    if (currentView !== 'admin' && currentView !== 'admin-add-product') {
+      setIsAdminLoggedIn(false);
+      setAdminLoginPassword('');
     }
   }, [currentView]);
 
@@ -299,6 +317,77 @@ export default function App() {
     );
   }, [searchQuery, products]);
 
+  // Filter products for homepage prominent search bar
+  const homeSearchResults = useMemo(() => {
+    const trimmed = activeHomeSearch.trim();
+    if (!trimmed) return [];
+    const q = trimmed.toLowerCase();
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q)
+    );
+  }, [activeHomeSearch, products]);
+
+  // Filter & sort products for Trending view
+  const trendingProducts = useMemo(() => {
+    const filtered = products.filter((item) => {
+      if (trendingFilter === 'All Trending') return true;
+      const combined = `${item.name} ${item.category} ${item.description}`.toLowerCase();
+      if (trendingFilter === 'Vases') {
+        return combined.includes('vase') || combined.includes('vessel') || combined.includes('planter');
+      }
+      if (trendingFilter === 'Lighting') {
+        return combined.includes('light') || combined.includes('lamp');
+      }
+      if (trendingFilter === 'Textiles') {
+        return (
+          combined.includes('textile') ||
+          combined.includes('linen') ||
+          combined.includes('cushion') ||
+          combined.includes('throw') ||
+          combined.includes('sheet')
+        );
+      }
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (trendingSort === 'newest') {
+        return products.indexOf(a) - products.indexOf(b);
+      }
+      return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+    });
+  }, [products, trendingFilter, trendingSort]);
+
+  // Gift Ideas curated 5-item set
+  const giftProducts = useMemo(() => {
+    const tagRotation = [
+      'Birthday Celebrations',
+      'Christmas & Holiday Wonders',
+      'Under $30 Sweet Spots',
+      'Creative & Open Play',
+      'STEM & Mind Boosters',
+    ] as const;
+    return products.slice(0, 5).map((item, idx) => ({
+      ...item,
+      price: idx === 0 || idx === 2 ? Math.min(Number(item.price || 28), 29) : item.price,
+      retailer: idx % 2 === 0 ? ('AMAZON' as const) : ('ALIEXPRESS' as const),
+      giftTag: tagRotation[idx % tagRotation.length],
+    }));
+  }, [products]);
+
+  const filteredGiftProducts = useMemo(() => {
+    if (giftFilter === 'All Gift Picks') return giftProducts;
+    if (giftFilter === 'Under $30 Sweet Spots') {
+      return giftProducts.filter(
+        (p) => p.giftTag === 'Under $30 Sweet Spots' || (p.price !== undefined && p.price !== null && p.price <= 30)
+      );
+    }
+    return giftProducts.filter((p) => p.giftTag === giftFilter);
+  }, [giftProducts, giftFilter]);
+
   // Wishlist products
   const wishlistProducts = useMemo(() => {
     return products.filter((p) => wishlist.includes(p.id));
@@ -308,7 +397,8 @@ export default function App() {
   const currentCategoryMeta = defaultCategories.find((c) => c.slug === selectedCategorySlug);
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-white">
+    <div className="min-h-screen bg-transparent text-[#111111] flex flex-col font-sans selection:bg-[#111111] selection:text-white">
+      <SparkleCursor />
       {/* Top Banner Notice */}
       <div className="bg-[#111111] text-[#ededed] px-4 py-2 text-center text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3">
         <Sparkles className="w-3.5 h-3.5 text-[#c2b29d]" />
@@ -340,11 +430,11 @@ export default function App() {
             </div>
 
             {/* Center Navigation Links */}
-            <nav className="hidden md:flex items-center gap-10 text-sm tracking-wide text-[#525252]">
+            <nav className="hidden md:flex items-center gap-8 lg:gap-10 text-sm tracking-wide text-[#525252]">
               <button
                 type="button"
                 onClick={handleBackToStorefront}
-                className={`transition-colors cursor-pointer ${
+                className={`transition-colors cursor-pointer whitespace-nowrap ${
                   currentView === 'home' ? 'text-[#111111] font-medium' : 'hover:text-[#111111]'
                 }`}
               >
@@ -356,7 +446,7 @@ export default function App() {
                   setCurrentView('categories');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className={`transition-colors cursor-pointer ${
+                className={`transition-colors cursor-pointer whitespace-nowrap ${
                   currentView === 'categories' ? 'text-[#111111] font-medium' : 'hover:text-[#111111]'
                 }`}
               >
@@ -365,10 +455,34 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => {
+                  setCurrentView('trending');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`transition-colors cursor-pointer whitespace-nowrap ${
+                  currentView === 'trending' ? 'text-[#111111] font-medium' : 'hover:text-[#111111]'
+                }`}
+              >
+                Trending
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentView('gift-ideas');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`transition-colors cursor-pointer whitespace-nowrap ${
+                  currentView === 'gift-ideas' ? 'text-[#111111] font-medium' : 'hover:text-[#111111]'
+                }`}
+              >
+                Gift Ideas
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   setCurrentView('about');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className={`transition-colors cursor-pointer ${
+                className={`transition-colors cursor-pointer whitespace-nowrap ${
                   currentView === 'about' ? 'text-[#111111] font-medium' : 'hover:text-[#111111]'
                 }`}
               >
@@ -408,11 +522,10 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setAdminLoginError('');
-                  const isAuth =
-                    typeof window !== 'undefined' &&
-                    localStorage.getItem('isAdminAuthenticated') === 'true';
-                  setIsAdminLoggedIn(isAuth);
-                  setCurrentView(isAuth ? 'admin-add-product' : 'admin-login');
+                  setAdminLoginEmail('');
+                  setAdminLoginPassword('');
+                  setIsAdminLoggedIn(false);
+                  setCurrentView('admin-login');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className={`inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-medium tracking-wide rounded-full border transition-all cursor-pointer ${
@@ -465,6 +578,28 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
+                  setCurrentView('trending');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="py-1.5 text-left hover:text-[#111111] cursor-pointer"
+              >
+                Trending
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setCurrentView('gift-ideas');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="py-1.5 text-left hover:text-[#111111] cursor-pointer"
+              >
+                Gift Ideas
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
                   setCurrentView('about');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
@@ -491,6 +626,40 @@ export default function App() {
                 document.getElementById('categories-section')?.scrollIntoView({ behavior: 'smooth' });
               }}
             />
+
+            {/* Hero Statistics Section */}
+            <section aria-label="Curated highlights" className="w-full bg-[#faf9f6] border-b border-[#e5e5e5]">
+              <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-8 sm:py-10">
+                <div className="flex flex-wrap items-start justify-start gap-10 sm:gap-16 lg:gap-20">
+                  <div>
+                    <p className="font-serif text-2xl sm:text-3xl font-semibold text-[#111111] tracking-tight">
+                      100%
+                    </p>
+                    <p className="mt-1 text-xs sm:text-sm text-[#737373] font-light">
+                      Curated Quality
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="font-serif text-2xl sm:text-3xl font-semibold text-[#111111] tracking-tight">
+                      12+
+                    </p>
+                    <p className="mt-1 text-xs sm:text-sm text-[#737373] font-light">
+                      Design Categories
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="font-serif text-2xl sm:text-3xl font-semibold text-[#111111] tracking-tight">
+                      0 Fee
+                    </p>
+                    <p className="mt-1 text-xs sm:text-sm text-[#737373] font-light">
+                      Zero-Cost Discovery
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* Browse Categories Grid Section */}
             <section id="categories-section" className="pt-20 sm:pt-28 pb-4 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full">
@@ -546,8 +715,156 @@ export default function App() {
               </div>
             </section>
 
+            {/* Prominent Search Section */}
+            <section id="search-section" className="pt-16 sm:pt-24 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full">
+              <div className="bg-white border border-[#e5e5e5] shadow-[0_6px_30px_-8px_rgba(0,0,0,0.06)] rounded-3xl p-8 sm:p-12">
+                <div className="max-w-3xl mx-auto text-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#faf9f6] border border-[#e5e5e5] text-[11px] uppercase tracking-[0.22em] text-[#525252] font-medium mb-5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#111111]" />
+                    <span>Find Your Aesthetic Piece</span>
+                  </div>
+
+                  <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-[#111111] leading-[1.15]">
+                    What are you looking for today?
+                  </h2>
+                </div>
+
+                {/* Search Bar */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setActiveHomeSearch(homeSearchInput.trim());
+                    document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="mt-8 max-w-2xl mx-auto"
+                >
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-2 rounded-2xl sm:rounded-full bg-[#faf9f6] border border-[#e5e5e5] focus-within:border-[#111111] transition-colors shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)]">
+                    <div className="flex items-center flex-1 pl-4 pr-2">
+                      <Search className="w-5 h-5 text-[#737373] shrink-0" />
+                      <input
+                        type="text"
+                        value={homeSearchInput}
+                        onChange={(e) => {
+                          setHomeSearchInput(e.target.value);
+                          if (!e.target.value.trim()) {
+                            setActiveHomeSearch('');
+                          }
+                        }}
+                        placeholder="Search sculptural vases, ambient lamps, linen..."
+                        aria-label="Search curated decor"
+                        className="w-full bg-transparent pl-3 pr-2 py-2.5 text-sm sm:text-base text-[#111111] placeholder:text-[#a3a3a3] focus:outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="px-7 py-3 rounded-xl sm:rounded-full bg-[#111111] text-white text-sm font-medium tracking-wide hover:bg-black transition-colors cursor-pointer shrink-0"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </form>
+
+                {/* Popular Shortcuts */}
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+                  <span className="text-xs uppercase tracking-[0.18em] text-[#737373] mr-1">
+                    Popular:
+                  </span>
+                  {['Vases', 'Lighting', 'Textiles', 'Wall Art', 'Candles'].map((term) => {
+                    const isActive = activeHomeSearch.trim().toLowerCase() === term.toLowerCase();
+                    return (
+                      <button
+                        key={term}
+                        type="button"
+                        onClick={() => {
+                          setHomeSearchInput(term);
+                          setActiveHomeSearch(term);
+                          document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className={`px-4 py-1.5 rounded-full text-xs sm:text-sm border transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-[#111111] text-white border-[#111111]'
+                            : 'bg-white text-[#525252] border-[#e5e5e5] hover:border-[#111111] hover:text-[#111111] hover:bg-[#faf9f6]'
+                        }`}
+                      >
+                        {term}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
             {/* Category Stacked Sections */}
             <div id="products-section" className="py-20 sm:py-28 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full space-y-24 sm:space-y-32">
+              {activeHomeSearch.trim() ? (
+                <section>
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-10 sm:mb-14">
+                    <div>
+                      <div className="flex items-center gap-2.5 mb-2.5">
+                        <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-semibold">
+                          Curated Search Results
+                        </span>
+                        <span className="text-[#a3a3a3]">&middot;</span>
+                        <span className="text-xs text-[#8c7b6c] font-medium">
+                          {homeSearchResults.length}{' '}
+                          {homeSearchResults.length === 1 ? 'Piece' : 'Pieces'} Found
+                        </span>
+                      </div>
+
+                      <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#111111] font-normal tracking-tight">
+                        Results for &ldquo;{activeHomeSearch.trim()}&rdquo;
+                      </h2>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHomeSearchInput('');
+                        setActiveHomeSearch('');
+                      }}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-[#e5e5e5] text-xs uppercase tracking-wider font-medium text-[#111111] hover:bg-[#111111] hover:text-white hover:border-[#111111] transition-all self-start sm:self-end shrink-0 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.04)] cursor-pointer"
+                    >
+                      <span>Clear Search</span>
+                    </button>
+                  </div>
+
+                  {homeSearchResults.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
+                      {homeSearchResults.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          isWishlisted={wishlist.includes(product.id)}
+                          onToggleWishlist={handleToggleWishlist}
+                          onQuickView={(p) => setQuickViewProduct(p)}
+                          onProductClick={handleProductSelect}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-16 text-center bg-white border border-[#e5e5e5] rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] p-8">
+                      <p className="font-serif text-xl text-[#111111]">
+                        No aesthetic pieces matched &ldquo;{activeHomeSearch.trim()}&rdquo;.
+                      </p>
+                      <p className="mt-2 text-sm text-[#737373] font-light">
+                        Try another keyword or explore one of our popular shortcuts above.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHomeSearchInput('');
+                          setActiveHomeSearch('');
+                        }}
+                        className="inline-block mt-5 px-6 py-2.5 rounded-full bg-[#111111] text-white text-xs uppercase tracking-wider font-medium hover:bg-black transition-colors cursor-pointer"
+                      >
+                        View All Products
+                      </button>
+                    </div>
+                  )}
+                </section>
+              ) : (
+                <>
               {defaultCategories.map((category) => {
                 const catProducts = products.filter((p) => {
                   const pCat = (p.category || '').toLowerCase().trim();
@@ -610,6 +927,8 @@ export default function App() {
                   </section>
                 );
               })}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -679,11 +998,12 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW: ABOUT PAGE (app/about/page.tsx simulation) */}
-        {currentView === 'about' && (
-          <div className="min-h-screen bg-[#faf9f6] text-[#111111] py-14 sm:py-20 lg:py-28">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-10">
-              <div className="mb-10">
+        {/* VIEW: TRENDING PAGE (app/trending/page.tsx simulation) */}
+        {currentView === 'trending' && (
+          <div className="min-h-screen bg-[#faf9f6] text-[#111111] py-10 sm:py-16 lg:py-20">
+            <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+              {/* Back Breadcrumb */}
+              <div className="mb-8">
                 <button
                   type="button"
                   onClick={handleBackToStorefront}
@@ -694,51 +1014,532 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="bg-white rounded-2xl border border-[#e5e5e5] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-8 sm:p-14 space-y-8">
-                <div>
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#faf9f6] border border-[#e5e5e5] mb-6">
-                    <Sparkles className="w-3.5 h-3.5 text-[#8c7b6c]" />
-                    <span className="text-[11px] uppercase tracking-[0.22em] text-[#525252] font-medium">
-                      Our Philosophy
-                    </span>
+              {/* 1. Hero Banner */}
+              <section className="rounded-3xl bg-gradient-to-br from-[#fdf3ea] via-[#faf9f6] to-[#f8e7d8] border border-[#eadfd3] px-6 py-12 sm:px-12 sm:py-16 lg:py-20 shadow-[0_6px_30px_-10px_rgba(0,0,0,0.05)]">
+                <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/85 border border-[#eadfd3] text-xs font-medium tracking-wide text-[#111111] shadow-2xs mb-6">
+                    <span>🔥 Trending Curations</span>
                   </div>
 
-                  <h1 className="font-serif text-4xl sm:text-5xl font-normal tracking-tight text-[#111111] leading-[1.14]">
-                    Curated Living &amp; Intentional Style
+                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-[#111111] leading-[1.12]">
+                    What&apos;s Hot Right Now
                   </h1>
+
+                  <p className="mt-5 text-base sm:text-lg text-[#525252] font-light leading-relaxed max-w-2xl">
+                    Discover the most-loved, best-reviewed, and highest-demand pieces inspiring intentional living right now.
+                  </p>
+
+                  <p className="mt-7 text-xs sm:text-sm tracking-wide text-[#737373] font-medium">
+                    Updated Daily &bull; Verified Retailer Picks &bull; Curator Approved
+                  </p>
+                </div>
+              </section>
+
+              {/* 2. Filter and Sort Bar */}
+              <section className="mt-12 sm:mt-14 pb-6 border-b border-[#e5e5e5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {(['All Trending', 'Vases', 'Lighting', 'Textiles'] as const).map((option) => {
+                    const isActive = trendingFilter === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setTrendingFilter(option)}
+                        className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium tracking-wide border transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-[#111111] text-white border-[#111111] shadow-xs'
+                            : 'bg-white text-[#525252] border-[#e5e5e5] hover:border-[#111111] hover:text-[#111111]'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div className="space-y-5 text-base sm:text-lg text-[#525252] font-light leading-relaxed">
-                  <p>
-                    Aesthetic Piece is an editorial home decor guide dedicated to quiet warmth, sculptural forms, and thoughtful everyday objects that turn houses into restful sanctuaries.
+                <div className="relative self-start sm:self-auto">
+                  <select
+                    value={trendingSort}
+                    onChange={(e) => setTrendingSort(e.target.value as 'popular' | 'newest')}
+                    aria-label="Sort trending products"
+                    className="appearance-none bg-white border border-[#e5e5e5] rounded-full pl-5 pr-10 py-2.5 text-xs sm:text-sm font-medium text-[#111111] focus:outline-none focus:border-[#111111] transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <option value="popular">Most Popular</option>
+                    <option value="newest">Newest Arrivals</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-[#737373] pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2" />
+                </div>
+              </section>
+
+              {/* 3. Product Grid */}
+              <section className="mt-10 sm:mt-12">
+                {trendingProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {trendingProducts.map((product) => (
+                      <article
+                        key={product.id}
+                        className="group relative flex flex-col bg-white border border-[#e5e5e5]/80 rounded-2xl overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_14px_30px_-8px_rgba(0,0,0,0.1)] transition-all duration-300"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleProductSelect(product.id)}
+                          className="relative aspect-[4/5] w-full overflow-hidden bg-[#f4f2ee] block cursor-pointer text-left"
+                        >
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                            loading="lazy"
+                          />
+
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                          <span className="absolute top-3.5 left-3.5 bg-[#111111]/90 backdrop-blur-xs text-white text-[10px] tracking-[0.18em] uppercase font-medium px-3 py-1 rounded-full z-10">
+                            Trending
+                          </span>
+
+                          <span className="absolute top-3.5 right-3.5 bg-white/95 backdrop-blur-xs text-[#111111] border border-[#e5e5e5] text-[10px] tracking-[0.14em] uppercase font-semibold px-3 py-1 rounded-full shadow-xs z-10">
+                            Save 20%
+                          </span>
+                        </button>
+
+                        <div className="p-6 flex flex-col flex-grow justify-between bg-white">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#737373]">
+                              {product.category}
+                            </span>
+
+                            <div className="mt-1.5 flex items-baseline justify-between gap-3">
+                              <button
+                                type="button"
+                                onClick={() => handleProductSelect(product.id)}
+                                className="font-serif text-lg font-medium text-[#111111] group-hover:text-black line-clamp-1 hover:underline decoration-1 underline-offset-4 text-left cursor-pointer"
+                              >
+                                {product.name}
+                              </button>
+                              {product.price !== undefined && product.price !== null && product.price > 0 && (
+                                <span className="font-serif text-base font-medium text-[#111111] shrink-0">
+                                  ${Number(product.price).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="mt-2.5 text-xs text-[#525252] leading-relaxed line-clamp-2 font-light">
+                              {product.description}
+                            </p>
+                          </div>
+
+                          <div className="mt-5 pt-4 border-t border-[#f2efe9] flex items-center justify-between gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleProductSelect(product.id)}
+                              className="text-xs text-[#737373] hover:text-[#111111] transition-colors font-medium cursor-pointer"
+                            >
+                              View Details
+                            </button>
+
+                            <a
+                              href={product.affiliateLink || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium tracking-wide text-white bg-[#111111] hover:bg-black rounded-full active:scale-[0.98] transition-all cursor-pointer"
+                            >
+                              <span>Shop Now</span>
+                              <ExternalLink className="w-3 h-3 stroke-[1.75]" />
+                            </a>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-16 text-center bg-white border border-[#e5e5e5] rounded-2xl p-8">
+                    <p className="font-serif text-xl text-[#111111]">
+                      No trending pieces found for &ldquo;{trendingFilter}&rdquo;.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setTrendingFilter('All Trending')}
+                      className="mt-5 px-6 py-2.5 rounded-full bg-[#111111] text-white text-xs uppercase tracking-wider font-medium hover:bg-black transition-colors cursor-pointer"
+                    >
+                      Show All Trending
+                    </button>
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: GIFT IDEAS PAGE (app/gift-ideas/page.tsx simulation) */}
+        {currentView === 'gift-ideas' && (
+          <div className="min-h-screen bg-[#faf9f6] text-[#111111] py-10 sm:py-16 lg:py-20">
+            <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+              <div className="mb-8">
+                <button
+                  type="button"
+                  onClick={handleBackToStorefront}
+                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#737373] hover:text-[#111111] transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Home</span>
+                </button>
+              </div>
+
+              {/* 1. Hero Banner */}
+              <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#fdf1f5] via-[#faf9f6] to-[#fbe6ee] border border-[#efdce3] px-6 py-12 sm:px-12 sm:py-16 lg:py-20 shadow-[0_6px_30px_-10px_rgba(0,0,0,0.05)]">
+                <Gift
+                  aria-hidden="true"
+                  className="w-14 h-14 sm:w-20 sm:h-20 text-[#cfa1b3]/35 absolute top-6 right-6 sm:top-8 sm:right-10 pointer-events-none stroke-[1.25]"
+                />
+
+                <div className="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-[#efdce3] text-[11px] sm:text-xs font-semibold tracking-[0.14em] uppercase text-[#111111] shadow-2xs mb-6">
+                    <span>🎁 MAGICAL GIFT IDEAS GUIDE</span>
+                  </div>
+
+                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-[#111111] leading-[1.12]">
+                    Unbox Pure Wonder &amp; Joy
+                  </h1>
+
+                  <p className="mt-5 text-base sm:text-lg text-[#525252] font-light leading-relaxed max-w-2xl">
+                    Find the perfect surprise for birthday parties, Christmas stockings, milestone celebrations, and everyday smiles. Curated with love, tested for wonder, and gentle on parent budgets.
                   </p>
-                  <p>
-                    Every vase, ambient lamp, travertine vessel, and European linen textile featured in our collection is handpicked for tactile balance, timeless materials, and effortless styling across modern living spaces.
+
+                  <p className="mt-7 text-xs sm:text-sm tracking-wide text-[#737373] font-medium">
+                    {giftProducts.length} Gift Recommendations Available &bull; Age-Appropriate &bull; Direct Affiliate Links
                   </p>
                 </div>
+              </section>
 
-                <div className="pt-6 border-t border-[#e5e5e5] flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {/* 2. Filter Pills */}
+              <section className="mt-12 sm:mt-14 pb-6 border-b border-[#e5e5e5]">
+                <div className="flex flex-wrap items-center gap-2.5">
                   <button
                     type="button"
-                    onClick={() => {
-                      setCurrentView('categories');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#111111] hover:bg-black text-white text-xs uppercase tracking-[0.2em] font-medium transition-all shadow-sm cursor-pointer"
+                    onClick={() => setGiftFilter('All Gift Picks')}
+                    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium tracking-wide border transition-all cursor-pointer ${
+                      giftFilter === 'All Gift Picks'
+                        ? 'bg-[#111111] text-white border-[#111111] shadow-xs'
+                        : 'bg-white text-[#525252] border-[#e5e5e5] hover:border-[#111111] hover:text-[#111111]'
+                    }`}
                   >
-                    <span>Browse Categories</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span>All Gift Picks ({giftProducts.length})</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleBackToStorefront}
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white border border-[#e5e5e5] hover:border-[#111111] text-[#111111] text-xs uppercase tracking-[0.2em] font-medium transition-all cursor-pointer"
-                  >
-                    <span>Explore Collection</span>
-                  </button>
+
+                  {[
+                    { label: 'Birthday Celebrations', icon: Cake },
+                    { label: 'Christmas & Holiday Wonders', icon: Sparkles },
+                    { label: 'STEM & Mind Boosters', icon: Lightbulb },
+                    { label: 'Creative & Open Play', icon: Palette },
+                    { label: 'Under $30 Sweet Spots', icon: Tag },
+                  ].map(({ label, icon: Icon }) => {
+                    const isActive = giftFilter === label;
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setGiftFilter(label)}
+                        className={`inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium tracking-wide border transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-[#111111] text-white border-[#111111] shadow-xs'
+                            : 'bg-white text-[#525252] border-[#e5e5e5] hover:border-[#111111] hover:text-[#111111]'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5 shrink-0" />
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* 3. Product Grid */}
+              <section className="mt-8 sm:mt-10">
+                <p className="text-xs sm:text-sm text-[#737373] font-light mb-6">
+                  Showing {filteredGiftProducts.length} thoughtfully curated{' '}
+                  {filteredGiftProducts.length === 1 ? 'gift idea' : 'gift ideas'}
+                </p>
+
+                {filteredGiftProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {filteredGiftProducts.map((product) => (
+                      <article
+                        key={product.id}
+                        className="group relative flex flex-col bg-white border border-[#e5e5e5]/80 rounded-2xl overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_14px_30px_-8px_rgba(0,0,0,0.1)] transition-all duration-300"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleProductSelect(product.id)}
+                          className="relative aspect-[4/5] w-full overflow-hidden bg-[#f4f2ee] block cursor-pointer text-left"
+                        >
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                            loading="lazy"
+                          />
+
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                          <span
+                            className={`absolute top-3.5 left-3.5 text-white text-[10px] tracking-[0.16em] uppercase font-semibold px-3 py-1 rounded-full shadow-xs z-10 ${
+                              product.retailer === 'AMAZON' ? 'bg-[#ff9900]' : 'bg-[#e62e04]'
+                            }`}
+                          >
+                            {product.retailer}
+                          </span>
+
+                          <span className="absolute top-3.5 right-3.5 bg-emerald-600 text-white text-[10px] tracking-[0.12em] uppercase font-semibold px-3 py-1 rounded-full shadow-xs z-10">
+                            Save 23%
+                          </span>
+                        </button>
+
+                        <div className="p-5 flex flex-col flex-grow justify-between bg-white">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-[#737373]">
+                              {product.category}
+                            </span>
+
+                            <div className="mt-1.5 flex items-baseline justify-between gap-2.5">
+                              <button
+                                type="button"
+                                onClick={() => handleProductSelect(product.id)}
+                                className="font-serif text-lg font-medium text-[#111111] group-hover:text-black line-clamp-1 hover:underline decoration-1 underline-offset-4 text-left cursor-pointer"
+                              >
+                                {product.name}
+                              </button>
+                              {product.price !== undefined && product.price !== null && product.price > 0 && (
+                                <span className="font-serif text-base font-medium text-[#111111] shrink-0">
+                                  ${Number(product.price).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="mt-2 text-xs text-[#525252] leading-relaxed line-clamp-2 font-light">
+                              {product.description}
+                            </p>
+                          </div>
+
+                          <div className="mt-5 pt-4 border-t border-[#f2efe9] flex items-center justify-between gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleProductSelect(product.id)}
+                              className="text-xs text-[#737373] hover:text-[#111111] transition-colors font-medium cursor-pointer"
+                            >
+                              View Details
+                            </button>
+
+                            <a
+                              href={product.affiliateLink || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium tracking-wide text-white bg-[#111111] hover:bg-black rounded-full active:scale-[0.98] transition-all cursor-pointer"
+                            >
+                              <span>Shop Gift</span>
+                              <ExternalLink className="w-3 h-3 stroke-[1.75]" />
+                            </a>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-16 text-center bg-white border border-[#e5e5e5] rounded-2xl p-8">
+                    <p className="font-serif text-xl text-[#111111]">
+                      No gift ideas matched &ldquo;{giftFilter}&rdquo;.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setGiftFilter('All Gift Picks')}
+                      className="mt-5 px-6 py-2.5 rounded-full bg-[#111111] text-white text-xs uppercase tracking-wider font-medium hover:bg-black transition-colors cursor-pointer"
+                    >
+                      Show All Gift Picks
+                    </button>
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: ABOUT PAGE (app/about/page.tsx simulation) */}
+        {currentView === 'about' && (
+          <div className="min-h-screen bg-[#faf9f6] text-[#111111]">
+            {/* 1. Full-Width Editorial Hero Section */}
+            <section className="relative w-full min-h-[460px] sm:min-h-[540px] flex items-center justify-center overflow-hidden">
+              <div
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-102"
+                style={{
+                  backgroundImage:
+                    'url("https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1920&q=85")',
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/75" />
+
+              <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 lg:px-10 py-24 sm:py-32 text-center flex flex-col items-center">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur-md mb-6">
+                  <Sparkles className="w-3.5 h-3.5 text-[#f5ece0]" />
+                  <span className="text-[11px] uppercase tracking-[0.24em] font-medium text-white/95">
+                    Our Story &middot; Aesthetic Piece
+                  </span>
+                </div>
+
+                <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-white leading-[1.12] max-w-3xl">
+                  Curated Living, Crafted for Quiet Warmth
+                </h1>
+
+                <p className="mt-6 text-base sm:text-lg text-white/85 font-light leading-relaxed max-w-2xl">
+                  An editorial curation dedicated to timeless home decor, organic materials, and thoughtful everyday objects that turn houses into restful sanctuaries.
+                </p>
+              </div>
+            </section>
+
+            {/* 2. Two-Column Brand Story Section */}
+            <section className="py-20 sm:py-28 border-b border-[#e5e5e5]">
+              <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
+                  <div className="lg:col-span-6">
+                    <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-[#ece8e1] border border-[#e5e5e5] shadow-[0_20px_50px_-14px_rgba(0,0,0,0.14)]">
+                      <img
+                        src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=85"
+                        alt="Warm minimalist living room styled with natural textiles and sculptural accents"
+                        className="w-full h-full object-cover object-center"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-6 space-y-7">
+                    <div>
+                      <span className="text-[11px] uppercase tracking-[0.25em] text-[#737373] font-semibold block mb-3">
+                        The Philosophy
+                      </span>
+                      <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-[#111111] leading-[1.16]">
+                        Beauty Lives in the Quiet Details
+                      </h2>
+                    </div>
+
+                    <div className="space-y-5 text-base sm:text-lg text-[#525252] font-light leading-relaxed">
+                      <p>
+                        Aesthetic Piece began with a simple conviction: the spaces we wake up to each morning quietly shape how we think, rest, and create. Rather than chasing fleeting trends, we seek out pieces with honest textures and enduring stillness.
+                      </p>
+                      <p>
+                        From hand-finished fluted ceramic vessels and warm diffused table lamps to basalt stone water features and stonewashed European flax linens, every item in our edit is chosen to bring effortless tactile harmony to modern rooms.
+                      </p>
+                    </div>
+
+                    <div className="pt-6 border-t border-[#e5e5e5] flex flex-wrap items-center gap-8 text-xs uppercase tracking-[0.2em] text-[#737373]">
+                      <div>
+                        <span className="block font-serif text-2xl text-[#111111] normal-case tracking-tight mb-0.5">
+                          Handpicked
+                        </span>
+                        <span>Small-Batch Aesthetics</span>
+                      </div>
+                      <div className="h-8 w-px bg-[#e5e5e5]" />
+                      <div>
+                        <span className="block font-serif text-2xl text-[#111111] normal-case tracking-tight mb-0.5">
+                          Timeless
+                        </span>
+                        <span>Organic Earth Palette</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </section>
+
+            {/* 3. Values / Philosophy Cards Section */}
+            <section className="py-20 sm:py-28">
+              <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+                <div className="max-w-2xl mx-auto text-center mb-14 sm:mb-16">
+                  <span className="text-[11px] uppercase tracking-[0.25em] text-[#737373] font-semibold block mb-3">
+                    What Guides Every Edit
+                  </span>
+                  <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-[#111111]">
+                    Our Core Values
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {[
+                    {
+                      icon: Compass,
+                      eyebrow: '01 · Form & Restraint',
+                      title: 'Intentional Design',
+                      description:
+                        'Every silhouette we select serves a quiet purpose—balancing organic textures, gentle proportions, and architectural calm so your rooms breathe naturally.',
+                    },
+                    {
+                      icon: ShieldCheck,
+                      eyebrow: '02 · Tactile Honesty',
+                      title: 'Verified Quality',
+                      description:
+                        'We prioritize enduring materials—matte stoneware, honed travertine, brushed brass, and washed European flax—evaluated for craftsmanship that deepens with age.',
+                    },
+                    {
+                      icon: Sparkles,
+                      eyebrow: '03 · Restful Spaces',
+                      title: 'Curated Aesthetics',
+                      description:
+                        'Rather than overwhelming catalogs, we assemble cohesive atmospheres where ambient light, sculptural vessels, and calming accents live together effortlessly.',
+                    },
+                  ].map((value) => {
+                    const IconComponent = value.icon;
+                    return (
+                      <div
+                        key={value.title}
+                        className="bg-white rounded-2xl border border-[#e5e5e5] shadow-[0_8px_30px_-10px_rgba(0,0,0,0.06)] p-8 sm:p-10 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.1)] hover:-translate-y-0.5"
+                      >
+                        <div>
+                          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#faf9f6] border border-[#e5e5e5] mb-6">
+                            <IconComponent className="w-5 h-5 text-[#111111] stroke-[1.6]" />
+                          </div>
+                          <span className="block text-[10px] uppercase tracking-[0.22em] text-[#8c7b6c] font-semibold mb-2">
+                            {value.eyebrow}
+                          </span>
+                          <h3 className="font-serif text-2xl font-normal text-[#111111] tracking-tight mb-3">
+                            {value.title}
+                          </h3>
+                          <p className="text-sm sm:text-base text-[#525252] font-light leading-relaxed">
+                            {value.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            {/* 4. Bold Centered Call to Action */}
+            <section className="pb-24 sm:pb-32 pt-4">
+              <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-10">
+                <div className="bg-[#111111] text-white rounded-3xl px-8 sm:px-14 py-16 sm:py-20 text-center shadow-[0_24px_55px_-16px_rgba(17,17,17,0.35)] border border-[#262626]">
+                  <span className="inline-block text-[11px] uppercase tracking-[0.26em] text-[#c2b29d] font-medium mb-4">
+                    Begin Your Curation
+                  </span>
+                  <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-white max-w-2xl mx-auto leading-[1.15]">
+                    Discover Pieces That Bring Calm to Every Room
+                  </h2>
+                  <p className="mt-5 text-sm sm:text-base text-[#a3a3a3] font-light max-w-xl mx-auto leading-relaxed">
+                    Browse our curated atmospheres—from sculptural ceramics and warm ambient lighting to natural linen essentials.
+                  </p>
+                  <div className="mt-9 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentView('categories');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="inline-flex items-center gap-2.5 px-9 py-4 rounded-full bg-[#faf9f6] hover:bg-white text-[#111111] text-xs sm:text-sm uppercase tracking-[0.2em] font-medium transition-all shadow-lg active:scale-[0.98] cursor-pointer"
+                    >
+                      <span>Explore Categories</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         )}
 
@@ -996,7 +1797,6 @@ export default function App() {
                       return;
                     }
 
-                    localStorage.setItem('isAdminAuthenticated', 'true');
                     setIsAdminLoggedIn(true);
                     setAdminLoginPassword('');
                     setCurrentView('admin-add-product');
@@ -1117,8 +1917,8 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => {
-                      localStorage.removeItem('isAdminAuthenticated');
                       setIsAdminLoggedIn(false);
+                      setAdminLoginEmail('');
                       setAdminLoginPassword('');
                       setCurrentView('admin-login');
                     }}
@@ -1430,11 +2230,10 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setAdminLoginError('');
-                  const isAuth =
-                    typeof window !== 'undefined' &&
-                    localStorage.getItem('isAdminAuthenticated') === 'true';
-                  setIsAdminLoggedIn(isAuth);
-                  setCurrentView(isAuth ? 'admin-add-product' : 'admin-login');
+                  setAdminLoginEmail('');
+                  setAdminLoginPassword('');
+                  setIsAdminLoggedIn(false);
+                  setCurrentView('admin-login');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="text-[#a3a3a3] hover:text-white transition-colors cursor-pointer"

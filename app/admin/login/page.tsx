@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Lock, Mail, Eye, EyeOff, AlertCircle, ShieldCheck } from 'lucide-react';
+import {
+  clearInMemoryAdminSession,
+  grantInMemoryAdminSession,
+} from '@/lib/admin-memory-auth';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -13,11 +17,10 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Always clear any prior session when opening /admin/login so credentials are required every time
   useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('isAdminAuthenticated') === 'true') {
-      router.replace('/admin/add-product');
-    }
-  }, [router]);
+    clearInMemoryAdminSession();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,11 +42,8 @@ export default function AdminLoginPage() {
         return;
       }
 
-      localStorage.setItem('isAdminAuthenticated', 'true');
-      localStorage.setItem('adminEmail', data.user?.email || email.trim());
-
+      grantInMemoryAdminSession(data.user?.email || email.trim());
       router.push(data.redirectTo || '/admin/add-product');
-      router.refresh();
     } catch {
       setError('Unable to reach authentication server. Please try again.');
       setIsLoading(false);
@@ -57,6 +57,7 @@ export default function AdminLoginPage() {
         <div className="mb-8 flex justify-center">
           <Link
             href="/"
+            onClick={() => clearInMemoryAdminSession()}
             className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#737373] hover:text-[#111111] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -155,7 +156,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="mt-6 text-center text-[11px] text-[#737373] font-light">
-          Protected with HTTP-only session cookies.
+          Credentials are verified per visit and cleared automatically upon leaving admin pages.
         </p>
       </div>
     </div>

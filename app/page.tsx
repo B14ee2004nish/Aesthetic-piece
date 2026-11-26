@@ -4,7 +4,7 @@ import Hero from '@/components/Hero';
 import ProductCard, { ProductType } from '@/components/ProductCard';
 import { defaultCategories, CategoryItem } from '@/components/CategoryGrid';
 import prisma from '@/lib/prisma';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Search, Sparkles } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -230,8 +230,27 @@ async function getCategories(): Promise<CategoryItem[]> {
   return defaultCategories;
 }
 
-export default async function HomePage() {
+const POPULAR_SHORTCUTS = ['Vases', 'Lighting', 'Textiles', 'Wall Art', 'Candles'];
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string }> | { q?: string };
+}) {
+  const resolvedParams = searchParams ? await Promise.resolve(searchParams) : {};
+  const rawQuery = typeof resolvedParams?.q === 'string' ? resolvedParams.q.trim() : '';
+  const queryLower = rawQuery.toLowerCase();
+
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+
+  const searchMatchedProducts = rawQuery
+    ? products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(queryLower) ||
+          p.category.toLowerCase().includes(queryLower) ||
+          p.description.toLowerCase().includes(queryLower)
+      )
+    : [];
 
   // Helper to match products to a category
   const getProductsForCategory = (cat: CategoryItem): ProductType[] => {
@@ -280,6 +299,40 @@ export default async function HomePage() {
     <div className="flex flex-col min-h-screen bg-[#faf9f6] text-[#111111]">
       {/* Hero Section */}
       <Hero />
+
+      {/* Hero Statistics Section */}
+      <section aria-label="Curated highlights" className="w-full bg-[#faf9f6] border-b border-[#e5e5e5]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-8 sm:py-10">
+          <div className="flex flex-wrap items-start justify-start gap-10 sm:gap-16 lg:gap-20">
+            <div>
+              <p className="font-serif text-2xl sm:text-3xl font-semibold text-[#111111] tracking-tight">
+                100%
+              </p>
+              <p className="mt-1 text-xs sm:text-sm text-[#737373] font-light">
+                Curated Quality
+              </p>
+            </div>
+
+            <div>
+              <p className="font-serif text-2xl sm:text-3xl font-semibold text-[#111111] tracking-tight">
+                12+
+              </p>
+              <p className="mt-1 text-xs sm:text-sm text-[#737373] font-light">
+                Design Categories
+              </p>
+            </div>
+
+            <div>
+              <p className="font-serif text-2xl sm:text-3xl font-semibold text-[#111111] tracking-tight">
+                0 Fee
+              </p>
+              <p className="mt-1 text-xs sm:text-sm text-[#737373] font-light">
+                Zero-Cost Discovery
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Browse Categories Section */}
       <section id="categories-section" className="pt-20 sm:pt-28 pb-4 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full">
@@ -334,8 +387,124 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Prominent Search Section */}
+      <section id="search-section" className="pt-16 sm:pt-24 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full">
+        <div className="bg-white border border-[#e5e5e5] shadow-[0_6px_30px_-8px_rgba(0,0,0,0.06)] rounded-3xl p-8 sm:p-12">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#faf9f6] border border-[#e5e5e5] text-[11px] uppercase tracking-[0.22em] text-[#525252] font-medium mb-5">
+              <Sparkles className="w-3.5 h-3.5 text-[#111111]" />
+              <span>Find Your Aesthetic Piece</span>
+            </div>
+
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-[#111111] leading-[1.15]">
+              What are you looking for today?
+            </h2>
+          </div>
+
+          {/* Search Bar */}
+          <form action="/#products-section" method="GET" className="mt-8 max-w-2xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-2 rounded-2xl sm:rounded-full bg-[#faf9f6] border border-[#e5e5e5] focus-within:border-[#111111] transition-colors shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center flex-1 pl-4 pr-2">
+                <Search className="w-5 h-5 text-[#737373] shrink-0" />
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={rawQuery}
+                  placeholder="Search sculptural vases, ambient lamps, linen..."
+                  aria-label="Search curated decor"
+                  className="w-full bg-transparent pl-3 pr-2 py-2.5 text-sm sm:text-base text-[#111111] placeholder:text-[#a3a3a3] focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="px-7 py-3 rounded-xl sm:rounded-full bg-[#111111] text-white text-sm font-medium tracking-wide hover:bg-black transition-colors cursor-pointer shrink-0"
+              >
+                Search
+              </button>
+            </div>
+          </form>
+
+          {/* Popular Shortcuts */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#737373] mr-1">
+              Popular:
+            </span>
+            {POPULAR_SHORTCUTS.map((term) => {
+              const isActive = queryLower === term.toLowerCase();
+              return (
+                <Link
+                  key={term}
+                  href={`/?q=${encodeURIComponent(term)}#products-section`}
+                  className={`px-4 py-1.5 rounded-full text-xs sm:text-sm border transition-all ${
+                    isActive
+                      ? 'bg-[#111111] text-white border-[#111111]'
+                      : 'bg-white text-[#525252] border-[#e5e5e5] hover:border-[#111111] hover:text-[#111111] hover:bg-[#faf9f6]'
+                  }`}
+                >
+                  {term}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* Stacked Categories & Products Section */}
       <div id="products-section" className="py-20 sm:py-28 max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 w-full space-y-24 sm:space-y-32">
+        {rawQuery ? (
+          <section>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-10 sm:mb-14">
+              <div>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <span className="text-[11px] uppercase tracking-[0.24em] text-[#737373] font-semibold">
+                    Curated Search Results
+                  </span>
+                  <span className="text-[#a3a3a3]">&middot;</span>
+                  <span className="text-xs text-[#8c7b6c] font-medium">
+                    {searchMatchedProducts.length}{' '}
+                    {searchMatchedProducts.length === 1 ? 'Piece' : 'Pieces'} Found
+                  </span>
+                </div>
+
+                <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#111111] font-normal tracking-tight">
+                  Results for &ldquo;{rawQuery}&rdquo;
+                </h2>
+              </div>
+
+              <Link
+                href="/#search-section"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-[#e5e5e5] text-xs uppercase tracking-wider font-medium text-[#111111] hover:bg-[#111111] hover:text-white hover:border-[#111111] transition-all self-start sm:self-end shrink-0 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.04)]"
+              >
+                <span>Clear Search</span>
+              </Link>
+            </div>
+
+            {searchMatchedProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
+                {searchMatchedProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="py-16 text-center bg-white border border-[#e5e5e5] rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] p-8">
+                <p className="font-serif text-xl text-[#111111]">
+                  No aesthetic pieces matched &ldquo;{rawQuery}&rdquo;.
+                </p>
+                <p className="mt-2 text-sm text-[#737373] font-light">
+                  Try another keyword or explore one of our popular shortcuts above.
+                </p>
+                <Link
+                  href="/#products-section"
+                  className="inline-block mt-5 px-6 py-2.5 rounded-full bg-[#111111] text-white text-xs uppercase tracking-wider font-medium hover:bg-black transition-colors"
+                >
+                  View All Products
+                </Link>
+              </div>
+            )}
+          </section>
+        ) : (
+          <>
         {displayGroups.map(({ category, products: catProducts }, index) => {
           return (
             <section
@@ -430,6 +599,8 @@ export default async function HomePage() {
             </section>
           );
         })}
+          </>
+        )}
       </div>
     </div>
   );

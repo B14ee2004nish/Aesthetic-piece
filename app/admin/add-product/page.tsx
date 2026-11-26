@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminDashboardClient from '@/components/AdminDashboardClient';
+import { getInMemoryAdminSession } from '@/lib/admin-memory-auth';
 
 export default function AdminAddProductPage() {
   const router = useRouter();
@@ -10,13 +11,13 @@ export default function AdminAddProductPage() {
   const [adminEmail, setAdminEmail] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const isAuth = localStorage.getItem('isAdminAuthenticated') === 'true';
-    if (!isAuth) {
+    const session = getInMemoryAdminSession();
+    if (!session.authenticated) {
       router.replace('/admin/login');
       return;
     }
 
-    setAdminEmail(localStorage.getItem('adminEmail') || undefined);
+    setAdminEmail(session.email || undefined);
     setIsAuthorized(true);
   }, [router]);
 
@@ -24,7 +25,7 @@ export default function AdminAddProductPage() {
     return (
       <div className="min-h-[calc(100vh-5rem)] bg-[#faf9f6] flex items-center justify-center px-4">
         <p className="text-xs uppercase tracking-[0.2em] text-[#737373]">
-          Verifying administrator session...
+          Redirecting to administrator sign in...
         </p>
       </div>
     );

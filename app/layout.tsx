@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FloatingWhatsApp from '@/components/FloatingWhatsApp';
+import SparkleCursor from '@/components/SparkleCursor';
 
 export const metadata: Metadata = {
   title: 'Aesthetic Piece - Curated Living & Style',
@@ -32,6 +33,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#faf9f6] text-[#111111] min-h-screen flex flex-col antialiased selection:bg-[#111111] selection:text-white">
+        <SparkleCursor />
         <Header />
         <main className="flex-grow">{children}</main>
         <Footer />

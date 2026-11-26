@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Search, Heart, ShieldCheck, Menu, X } from 'lucide-react';
+import { clearInMemoryAdminSession } from '@/lib/admin-memory-auth';
 
 interface HeaderProps {
   wishlistCount?: number;
@@ -16,6 +18,13 @@ export default function Header({
   onWishlistClick,
 }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname && !pathname.startsWith('/admin')) {
+      clearInMemoryAdminSession();
+    }
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-40 bg-[#faf9f6]/92 backdrop-blur-md border-b border-[#e5e5e5] transition-all">
@@ -35,22 +44,34 @@ export default function Header({
           </div>
 
           {/* Center Navigation Links (Desktop) */}
-          <nav className="hidden md:flex items-center gap-10 text-sm tracking-wide text-[#525252]">
+          <nav className="hidden md:flex items-center gap-8 lg:gap-10 text-sm tracking-wide text-[#525252]">
             <Link
               href="/"
-              className="text-[#111111] font-medium transition-colors hover:text-black"
+              className="text-[#111111] font-medium transition-colors hover:text-black whitespace-nowrap"
             >
               Home
             </Link>
             <Link
               href="/categories"
-              className="hover:text-[#111111] transition-colors"
+              className="hover:text-[#111111] transition-colors whitespace-nowrap"
             >
               Categories
             </Link>
             <Link
+              href="/trending"
+              className="hover:text-[#111111] transition-colors whitespace-nowrap"
+            >
+              Trending
+            </Link>
+            <Link
+              href="/gift-ideas"
+              className="hover:text-[#111111] transition-colors whitespace-nowrap"
+            >
+              Gift Ideas
+            </Link>
+            <Link
               href="/about"
-              className="hover:text-[#111111] transition-colors"
+              className="hover:text-[#111111] transition-colors whitespace-nowrap"
             >
               About
             </Link>
@@ -86,6 +107,7 @@ export default function Header({
             {/* Admin Button */}
             <Link
               href="/admin/login"
+              onClick={() => clearInMemoryAdminSession()}
               className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-medium tracking-wide text-[#111111] bg-white border border-[#e5e5e5] rounded-full shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] hover:bg-[#111111] hover:text-white hover:border-[#111111] transition-all cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4 opacity-70" />
@@ -121,6 +143,20 @@ export default function Header({
               className="py-1.5 hover:text-[#111111]"
             >
               Categories
+            </Link>
+            <Link
+              href="/trending"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="py-1.5 hover:text-[#111111]"
+            >
+              Trending
+            </Link>
+            <Link
+              href="/gift-ideas"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="py-1.5 hover:text-[#111111]"
+            >
+              Gift Ideas
             </Link>
             <Link
               href="/about"
